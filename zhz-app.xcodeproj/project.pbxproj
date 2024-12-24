@@ -1,0 +1,546 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		9D4A92D22D1AB0F70099EC1B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9D4A92B82D1AB0F60099EC1B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D4A92BF2D1AB0F60099EC1B;
+			remoteInfo = "zhz-app";
+		};
+		9D4A92DC2D1AB0F70099EC1B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9D4A92B82D1AB0F60099EC1B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D4A92BF2D1AB0F60099EC1B;
+			remoteInfo = "zhz-app";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		9D4A92C02D1AB0F60099EC1B /* zhz-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "zhz-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D4A92D12D1AB0F70099EC1B /* zhz-appTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "zhz-appTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D4A92DB2D1AB0F70099EC1B /* zhz-appUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "zhz-appUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		9D4A92C22D1AB0F60099EC1B /* zhz-app */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "zhz-app";
+			sourceTree = "<group>";
+		};
+		9D4A92D42D1AB0F70099EC1B /* zhz-appTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "zhz-appTests";
+			sourceTree = "<group>";
+		};
+		9D4A92DE2D1AB0F70099EC1B /* zhz-appUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "zhz-appUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9D4A92BD2D1AB0F60099EC1B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9D4A92CE2D1AB0F70099EC1B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9D4A92D82D1AB0F70099EC1B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9D4A92B72D1AB0F60099EC1B = {
+			isa = PBXGroup;
+			children = (
+				9D4A92C22D1AB0F60099EC1B /* zhz-app */,
+				9D4A92D42D1AB0F70099EC1B /* zhz-appTests */,
+				9D4A92DE2D1AB0F70099EC1B /* zhz-appUITests */,
+				9D4A92C12D1AB0F60099EC1B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9D4A92C12D1AB0F60099EC1B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9D4A92C02D1AB0F60099EC1B /* zhz-app.app */,
+				9D4A92D12D1AB0F70099EC1B /* zhz-appTests.xctest */,
+				9D4A92DB2D1AB0F70099EC1B /* zhz-appUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9D4A92BF2D1AB0F60099EC1B /* zhz-app */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9D4A92E52D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-app" */;
+			buildPhases = (
+				9D4A92BC2D1AB0F60099EC1B /* Sources */,
+				9D4A92BD2D1AB0F60099EC1B /* Frameworks */,
+				9D4A92BE2D1AB0F60099EC1B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9D4A92C22D1AB0F60099EC1B /* zhz-app */,
+			);
+			name = "zhz-app";
+			packageProductDependencies = (
+			);
+			productName = "zhz-app";
+			productReference = 9D4A92C02D1AB0F60099EC1B /* zhz-app.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9D4A92D02D1AB0F70099EC1B /* zhz-appTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9D4A92E82D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-appTests" */;
+			buildPhases = (
+				9D4A92CD2D1AB0F70099EC1B /* Sources */,
+				9D4A92CE2D1AB0F70099EC1B /* Frameworks */,
+				9D4A92CF2D1AB0F70099EC1B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9D4A92D32D1AB0F70099EC1B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9D4A92D42D1AB0F70099EC1B /* zhz-appTests */,
+			);
+			name = "zhz-appTests";
+			packageProductDependencies = (
+			);
+			productName = "zhz-appTests";
+			productReference = 9D4A92D12D1AB0F70099EC1B /* zhz-appTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		9D4A92DA2D1AB0F70099EC1B /* zhz-appUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9D4A92EB2D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-appUITests" */;
+			buildPhases = (
+				9D4A92D72D1AB0F70099EC1B /* Sources */,
+				9D4A92D82D1AB0F70099EC1B /* Frameworks */,
+				9D4A92D92D1AB0F70099EC1B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9D4A92DD2D1AB0F70099EC1B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9D4A92DE2D1AB0F70099EC1B /* zhz-appUITests */,
+			);
+			name = "zhz-appUITests";
+			packageProductDependencies = (
+			);
+			productName = "zhz-appUITests";
+			productReference = 9D4A92DB2D1AB0F70099EC1B /* zhz-appUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9D4A92B82D1AB0F60099EC1B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					9D4A92BF2D1AB0F60099EC1B = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					9D4A92D02D1AB0F70099EC1B = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 9D4A92BF2D1AB0F60099EC1B;
+					};
+					9D4A92DA2D1AB0F70099EC1B = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 9D4A92BF2D1AB0F60099EC1B;
+					};
+				};
+			};
+			buildConfigurationList = 9D4A92BB2D1AB0F60099EC1B /* Build configuration list for PBXProject "zhz-app" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9D4A92B72D1AB0F60099EC1B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9D4A92C12D1AB0F60099EC1B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9D4A92BF2D1AB0F60099EC1B /* zhz-app */,
+				9D4A92D02D1AB0F70099EC1B /* zhz-appTests */,
+				9D4A92DA2D1AB0F70099EC1B /* zhz-appUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9D4A92BE2D1AB0F60099EC1B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9D4A92CF2D1AB0F70099EC1B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9D4A92D92D1AB0F70099EC1B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9D4A92BC2D1AB0F60099EC1B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9D4A92CD2D1AB0F70099EC1B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9D4A92D72D1AB0F70099EC1B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9D4A92D32D1AB0F70099EC1B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9D4A92BF2D1AB0F60099EC1B /* zhz-app */;
+			targetProxy = 9D4A92D22D1AB0F70099EC1B /* PBXContainerItemProxy */;
+		};
+		9D4A92DD2D1AB0F70099EC1B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9D4A92BF2D1AB0F60099EC1B /* zhz-app */;
+			targetProxy = 9D4A92DC2D1AB0F70099EC1B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9D4A92E32D1AB0F70099EC1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9D4A92E42D1AB0F70099EC1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		9D4A92E62D1AB0F70099EC1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "zhz-app/zhz_app.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"zhz-app/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-app";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9D4A92E72D1AB0F70099EC1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "zhz-app/zhz_app.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"zhz-app/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-app";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9D4A92E92D1AB0F70099EC1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/zhz-app.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/zhz-app";
+			};
+			name = Debug;
+		};
+		9D4A92EA2D1AB0F70099EC1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/zhz-app.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/zhz-app";
+			};
+			name = Release;
+		};
+		9D4A92EC2D1AB0F70099EC1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-appUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "zhz-app";
+			};
+			name = Debug;
+		};
+		9D4A92ED2D1AB0F70099EC1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-appUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "zhz-app";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9D4A92BB2D1AB0F60099EC1B /* Build configuration list for PBXProject "zhz-app" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D4A92E32D1AB0F70099EC1B /* Debug */,
+				9D4A92E42D1AB0F70099EC1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9D4A92E52D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-app" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D4A92E62D1AB0F70099EC1B /* Debug */,
+				9D4A92E72D1AB0F70099EC1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9D4A92E82D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-appTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D4A92E92D1AB0F70099EC1B /* Debug */,
+				9D4A92EA2D1AB0F70099EC1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9D4A92EB2D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-appUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D4A92EC2D1AB0F70099EC1B /* Debug */,
+				9D4A92ED2D1AB0F70099EC1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9D4A92B82D1AB0F60099EC1B /* Project object */;
+}
