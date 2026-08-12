@@ -113,22 +113,29 @@ enum MetricsFormatter {
     /// 这不只是排版偏好：状态项宽度一旦随数值变化，菜单栏就要跑一次 Auto Layout 重排，
     /// 并通过 XPC 把新尺寸同步给 ControlCenter 进程——实测这两项占了常驻 CPU 的绝大部分。
     /// 字段定宽后状态项宽度恒定，这条昂贵的路径彻底不会触发。
-    private static let speedFieldWidth = 6
-    private static let rightFieldWidth = 4
+    /// 列分隔符。两列各自右对齐、列间距按像素控制，而不是靠补空格——
+    /// 等宽字体下一个空格约 5pt，用字符当间距只能按整格跳，调不细。
+    static let columnSeparator: Character = "\t"
 
-    /// 排版可能达到的最宽内容，供状态项预先测量出恒定宽度。
-    static let widestTitle = "999.9G  CPU\n999.9G 100%"
+    /// 排版可能达到的最宽内容，供状态项预先测量出每列的恒定宽度。
+    static let widestTitle = "999.9G\tCPU\n999.9G\t100%"
 
-    /// 上行在上、下行在下是菜单栏监控的通用约定，因此不再绘制箭头：
-    /// 省下的字符宽度让两行严格对齐，`CPU` 标签正好落在百分比数值的正上方。
+    /// 上行在上、下行在下是菜单栏监控的通用约定，因此不再绘制箭头。
     /// 方向语义由无障碍标签补全，见 `accessibilityLabel(_:)`。
     static func statusTitle(_ metrics: SystemMetrics) -> String {
         let cpu = Int(metrics.cpuUsage.rounded())
-        let upload = padded(compactSpeed(metrics.uploadBytesPerSecond), to: speedFieldWidth)
-        let download = padded(compactSpeed(metrics.downloadBytesPerSecond), to: speedFieldWidth)
-        let label = padded("CPU", to: rightFieldWidth)
-        let cpuField = padded("\(cpu)%", to: rightFieldWidth)
-        return "\(upload) \(label)\n\(download) \(cpuField)"
+        let upload = compactSpeed(metrics.uploadBytesPerSecond)
+        let download = compactSpeed(metrics.downloadBytesPerSecond)
+        return "\(upload)\(columnSeparator)CPU\n\(download)\(columnSeparator)\(cpu)%"
+    }
+
+    /// 把一行拆成左右两列；缺失的右列按空串处理。
+    static func columns(of line: some StringProtocol) -> (left: String, right: String) {
+        let parts = line.split(separator: columnSeparator, omittingEmptySubsequences: false)
+        return (
+            left: parts.first.map { String($0) } ?? "",
+            right: parts.count > 1 ? String(parts[1]) : ""
+        )
     }
 
     /// 状态项本身不再有方向标记，VoiceOver 的朗读文本必须自己讲清上下行。
@@ -139,12 +146,6 @@ enum MetricsFormatter {
         return "上传 \(upload) 每秒，下载 \(download) 每秒，CPU 占用 \(cpu)%"
     }
 
-    /// 左侧补空格至指定字符宽度；超长时原样返回，宁可略微超宽也不截断数值。
-    private static func padded(_ text: String, to width: Int) -> String {
-        let deficit = width - text.count
-        guard deficit > 0 else { return text }
-        return String(repeating: " ", count: deficit) + text
-    }
 
     private static func compactSpeed(_ bytesPerSecond: Double) -> String {
         let value = bytesPerSecond.isFinite ? max(bytesPerSecond, 0) : 0

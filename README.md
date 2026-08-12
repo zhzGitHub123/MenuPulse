@@ -15,7 +15,7 @@ Two lines of monospaced text in a compact block. No main window, no Dock icon �
 - **Power aware** — sampling pauses on screen sleep, session switch, and system sleep, and resumes on wake
 - **Idle throttling** — when the network is quiet and the CPU is idle, the sampling interval stretches out to cut wakeups
 - **Adaptive appearance** — the status item renders as a template image and follows the light/dark menu bar automatically
-- **Rock-steady width** — fields are fixed-width, so the status item never resizes and never nudges the icons next to it
+- **Rock-steady width** — the two columns are measured once and never resize, so the status item keeps a constant width and never nudges the icons next to it
 - **Accessible** — full VoiceOver labels
 - **Zero dependencies** — pure AppKit, no third-party libraries
 - **Sandboxed** — App Sandbox enabled, requests only what it needs

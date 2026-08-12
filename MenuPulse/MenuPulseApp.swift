@@ -10,6 +10,9 @@ private enum AppConfiguration {
     static let minimumStatusItemWidth: CGFloat = 50
     static let statusImageHeight: CGFloat = 20
     static let imageHorizontalPadding: CGFloat = 4
+    /// 速度列与 CPU 列之间的间距。等宽字体下一个空格约 5pt，这里按点数给，
+    /// 才能调到比一个字符更窄。
+    static let columnSpacing: CGFloat = 4
     static let buttonHorizontalPadding: CGFloat = 6
     /// 采样周期。每次刷新状态项的固定成本约 10.4 ms CPU，远高于采样本身的 0.7 ms，
     /// 因此周期长度直接决定常驻能耗；3 秒是在读数跟手感与耗电之间取的平衡点。
@@ -114,30 +117,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.setAccessibilityLabel(MetricsFormatter.accessibilityLabel(metrics))
     }
 
-    /// 状态项的恒定宽度，按排版可能达到的最宽内容测量一次后缓存。
+    /// 两列各自的恒定宽度，按排版可能达到的最宽内容测量一次后缓存。
     ///
     /// 一次性算出宽度是刻意的：只要 `NSStatusItem.length` 不再变化，菜单栏就不会重排，
     /// 也不会向 ControlCenter 发送尺寸同步的 XPC 消息。
-    private lazy var fixedImageWidth: CGFloat = {
+    private lazy var columnLayout: (left: CGFloat, right: CGFloat, imageWidth: CGFloat) = {
         let attributes = statusTextAttributes
-        let widest = MetricsFormatter.widestTitle
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map { (String($0) as NSString).size(withAttributes: attributes).width }
-            .max() ?? 0
-        return ceil(widest) + AppConfiguration.imageHorizontalPadding
+        var left: CGFloat = 0
+        var right: CGFloat = 0
+
+        for line in MetricsFormatter.widestTitle.split(
+            separator: "\n",
+            omittingEmptySubsequences: false
+        ) {
+            let columns = MetricsFormatter.columns(of: line)
+            left = max(left, (columns.left as NSString).size(withAttributes: attributes).width)
+            right = max(right, (columns.right as NSString).size(withAttributes: attributes).width)
+        }
+
+        left = ceil(left)
+        right = ceil(right)
+        return (
+            left,
+            right,
+            left + AppConfiguration.columnSpacing + right
+                + AppConfiguration.imageHorizontalPadding
+        )
     }()
 
     private func makeStatusImage(_ title: String) -> NSImage {
-        let lines = title.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let lines = title.split(separator: "\n", omittingEmptySubsequences: false)
         let attributes = statusTextAttributes
-        let measuredLines = lines.prefix(2).map { line in
-            let text = line as NSString
-            return (text: text, size: text.size(withAttributes: attributes))
-        }
+        let layout = columnLayout
         let imageSize = NSSize(
-            width: fixedImageWidth,
+            width: layout.imageWidth,
             height: AppConfiguration.statusImageHeight
         )
+        let contentOrigin = AppConfiguration.imageHorizontalPadding / 2
+        let leftColumnEdge = contentOrigin + layout.left
+        let rightColumnEdge = leftColumnEdge + AppConfiguration.columnSpacing + layout.right
 
         // 立即光栅化，而不是交给 NSImage 的 drawingHandler。
         //
@@ -147,15 +165,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let image = NSImage(size: imageSize)
         image.lockFocusFlipped(true)
         let lineHeight = imageSize.height / CGFloat(max(lines.count, 1))
-        for (index, measuredLine) in measuredLines.enumerated() {
-            let origin = NSPoint(
-                x: floor((imageSize.width - measuredLine.size.width) / 2),
-                y: floor(
-                    CGFloat(index) * lineHeight
-                        + (lineHeight - measuredLine.size.height) / 2
-                )
+        for (index, line) in lines.prefix(2).enumerated() {
+            let columns = MetricsFormatter.columns(of: line)
+            let lineTop = CGFloat(index) * lineHeight
+            drawRightAligned(
+                columns.left,
+                rightEdge: leftColumnEdge,
+                lineTop: lineTop,
+                lineHeight: lineHeight,
+                attributes: attributes
             )
-            measuredLine.text.draw(at: origin, withAttributes: attributes)
+            drawRightAligned(
+                columns.right,
+                rightEdge: rightColumnEdge,
+                lineTop: lineTop,
+                lineHeight: lineHeight,
+                attributes: attributes
+            )
         }
         image.unlockFocus()
 
@@ -163,10 +189,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return image
     }
 
+    /// 两列都靠各自的右边缘对齐：速度的个位、CPU 的百分号因此始终停在同一条竖线上，
+    /// 数值位数变化时读数不会左右横跳。
+    private func drawRightAligned(
+        _ text: String,
+        rightEdge: CGFloat,
+        lineTop: CGFloat,
+        lineHeight: CGFloat,
+        attributes: [NSAttributedString.Key: Any]
+    ) {
+        guard !text.isEmpty else { return }
+
+        let content = text as NSString
+        let size = content.size(withAttributes: attributes)
+        let origin = NSPoint(
+            x: floor(rightEdge - size.width),
+            y: floor(lineTop + (lineHeight - size.height) / 2)
+        )
+        content.draw(at: origin, withAttributes: attributes)
+    }
+
     private var fixedStatusItemLength: CGFloat {
         max(
             AppConfiguration.minimumStatusItemWidth,
-            fixedImageWidth + AppConfiguration.buttonHorizontalPadding
+            columnLayout.imageWidth + AppConfiguration.buttonHorizontalPadding
         )
     }
 

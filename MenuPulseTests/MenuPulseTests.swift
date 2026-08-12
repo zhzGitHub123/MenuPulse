@@ -65,7 +65,7 @@ struct MenuPulseTests {
             cpuUsage: 20
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "  1.5K  CPU\n  6.0K  20%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "1.5K\tCPU\n6.0K\t20%")
     }
 
     @Test func statusTitleSwitchesToWholeNumbersAboveTen() {
@@ -75,7 +75,7 @@ struct MenuPulseTests {
             cpuUsage: 7
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "   12K  CPU\n  3.5M   7%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "12K\tCPU\n3.5M\t7%")
     }
 
     @Test func statusTitleCoversByteAndGigabyteEnds() {
@@ -85,21 +85,37 @@ struct MenuPulseTests {
             cpuUsage: 100
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "    0B  CPU\n  2.0G 100%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "0B\tCPU\n2.0G\t100%")
     }
 
-    /// 去掉方向箭头后，`CPU` 标签必须正好落在百分比数值的正上方，两行才对得齐。
-    @Test func statusTitleAlignsLabelAboveCPUValue() {
-        let metrics = SystemMetrics(
-            uploadBytesPerSecond: 1_536,
-            downloadBytesPerSecond: 6_144,
-            cpuUsage: 20
-        )
-        let lines = MetricsFormatter.statusTitle(metrics)
-            .split(separator: "\n", omittingEmptySubsequences: false)
+    /// 对齐由绘制时的列右对齐保证，前提是每行都能干净地拆成左右两列。
+    @Test func statusTitleAlwaysSplitsIntoTwoColumns() {
+        let samples = [
+            SystemMetrics(uploadBytesPerSecond: 0, downloadBytesPerSecond: 0, cpuUsage: 0),
+            SystemMetrics(
+                uploadBytesPerSecond: 1_536,
+                downloadBytesPerSecond: 12 * 1_024,
+                cpuUsage: 20
+            ),
+            SystemMetrics(
+                uploadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
+                downloadBytesPerSecond: 3.5 * 1_024 * 1_024,
+                cpuUsage: 100
+            )
+        ]
 
-        #expect(lines.count == 2)
-        #expect(lines[0].count == lines[1].count)
+        for metrics in samples {
+            let lines = MetricsFormatter.statusTitle(metrics)
+                .split(separator: "\n", omittingEmptySubsequences: false)
+            #expect(lines.count == 2)
+
+            for line in lines {
+                let columns = MetricsFormatter.columns(of: line)
+                #expect(!columns.left.isEmpty)
+                #expect(!columns.right.isEmpty)
+                #expect(columns.left.contains(MetricsFormatter.columnSeparator) == false)
+            }
+        }
     }
 
     /// 状态项本身没有方向标记，朗读文本必须补足上行、下行的语义。
@@ -180,9 +196,10 @@ struct MenuPulseTests {
         #expect(DisplayPolicy.isSignificantChange(from: displayed, to: busier))
     }
 
-    /// 定宽排版是状态项宽度恒定的前提，宽度恒定又是避免菜单栏重排的前提，
-    /// 因此这条不变量需要被测试锁住：任意量级的数值都必须渲染出等长的两行。
-    @Test func statusTitleKeepsConstantLineWidthAcrossMagnitudes() {
+    /// 状态项宽度由模板逐列预先测量得出，此后不再变化——这是避免菜单栏重排的前提。
+    /// 因此任何量级的读数，每一列都不能超出模板对应列的宽度，否则会被裁掉。
+    /// 等宽字体下字符数与渲染宽度成正比，可以直接用字符数比较。
+    @Test func widestTitleTemplateBoundsEveryColumn() {
         let samples = [
             SystemMetrics(uploadBytesPerSecond: 0, downloadBytesPerSecond: 0, cpuUsage: 0),
             SystemMetrics(uploadBytesPerSecond: 999, downloadBytesPerSecond: 1_023, cpuUsage: 5),
@@ -197,38 +214,34 @@ struct MenuPulseTests {
                 cpuUsage: 99
             ),
             SystemMetrics(
-                uploadBytesPerSecond: 2 * 1_024 * 1_024 * 1_024,
+                uploadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
                 downloadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
                 cpuUsage: 100
             )
         ]
 
-        let widths = samples.map { metrics -> [Int] in
-            MetricsFormatter.statusTitle(metrics)
-                .split(separator: "\n", omittingEmptySubsequences: false)
-                .map(\.count)
+        func widestColumns(of title: String) -> (left: Int, right: Int) {
+            title.split(separator: "\n", omittingEmptySubsequences: false)
+                .map(MetricsFormatter.columns(of:))
+                .reduce(into: (left: 0, right: 0)) { widest, columns in
+                    widest.left = max(widest.left, columns.left.count)
+                    widest.right = max(widest.right, columns.right.count)
+                }
         }
 
-        #expect(Set(widths).count == 1, "不同量级的数值渲染出了不同的行宽：\(widths)")
-    }
+        let template = widestColumns(of: MetricsFormatter.widestTitle)
 
-    /// 预测量用的模板必须覆盖真实排版的最大宽度，否则最宽内容会被裁掉。
-    @Test func widestTitleTemplateBoundsEveryRenderedLine() {
-        let extremes = SystemMetrics(
-            uploadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
-            downloadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
-            cpuUsage: 100
-        )
-        let templateWidth = MetricsFormatter.widestTitle
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map(\.count)
-            .max() ?? 0
-        let renderedWidth = MetricsFormatter.statusTitle(extremes)
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map(\.count)
-            .max() ?? 0
-
-        #expect(renderedWidth <= templateWidth)
+        for metrics in samples {
+            let rendered = widestColumns(of: MetricsFormatter.statusTitle(metrics))
+            #expect(
+                rendered.left <= template.left,
+                "速度列超出模板宽度：\(rendered.left) > \(template.left)"
+            )
+            #expect(
+                rendered.right <= template.right,
+                "CPU 列超出模板宽度：\(rendered.right) > \(template.right)"
+            )
+        }
     }
 
     @Test func idleDetectionRequiresQuietNetworkAndLowCPU() {
