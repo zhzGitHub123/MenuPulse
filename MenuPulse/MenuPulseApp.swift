@@ -78,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: AppConfiguration.minimumStatusItemWidth)
+        let item = NSStatusBar.system.statusItem(withLength: fixedStatusItemLength)
         guard let button = item.button else { return }
 
         let initialMetrics = SystemMetrics(
@@ -90,7 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.imagePosition = .imageOnly
         button.imageScaling = .scaleNone
         let title = MetricsFormatter.statusTitle(initialMetrics)
-        setStatusTitle(title, on: button, item: item)
+        setStatusTitle(title, on: button)
         button.toolTip = "实时网络速度与 CPU 占用"
 
         item.menu = makeMenu()
@@ -98,48 +98,65 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         lastTitle = title
     }
 
-    private func setStatusTitle(_ title: String, on button: NSButton, item: NSStatusItem) {
-        let rendered = makeStatusImage(title)
+    private func setStatusTitle(_ title: String, on button: NSButton) {
         button.title = ""
-        button.image = rendered.image
+        button.image = makeStatusImage(title)
         button.setAccessibilityLabel(title.replacingOccurrences(of: "\n", with: "，"))
-        if abs(item.length - rendered.itemWidth) >= 0.5 {
-            item.length = rendered.itemWidth
-        }
     }
 
-    private func makeStatusImage(_ title: String) -> (image: NSImage, itemWidth: CGFloat) {
+    /// 状态项的恒定宽度，按排版可能达到的最宽内容测量一次后缓存。
+    ///
+    /// 一次性算出宽度是刻意的：只要 `NSStatusItem.length` 不再变化，菜单栏就不会重排，
+    /// 也不会向 ControlCenter 发送尺寸同步的 XPC 消息。
+    private lazy var fixedImageWidth: CGFloat = {
+        let attributes = statusTextAttributes
+        let widest = MetricsFormatter.widestTitle
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map { (String($0) as NSString).size(withAttributes: attributes).width }
+            .max() ?? 0
+        return ceil(widest) + AppConfiguration.imageHorizontalPadding
+    }()
+
+    private func makeStatusImage(_ title: String) -> NSImage {
         let lines = title.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         let attributes = statusTextAttributes
         let measuredLines = lines.prefix(2).map { line in
             let text = line as NSString
             return (text: text, size: text.size(withAttributes: attributes))
         }
-        let contentWidth = measuredLines.map { $0.size.width }.max() ?? 0
-        let imageWidth = ceil(contentWidth) + AppConfiguration.imageHorizontalPadding
-        let imageSize = NSSize(width: imageWidth, height: AppConfiguration.statusImageHeight)
-        let image = NSImage(size: imageSize, flipped: true) { bounds in
-            let lineHeight = bounds.height / CGFloat(max(lines.count, 1))
+        let imageSize = NSSize(
+            width: fixedImageWidth,
+            height: AppConfiguration.statusImageHeight
+        )
 
-            for (index, measuredLine) in measuredLines.enumerated() {
-                let origin = NSPoint(
-                    x: floor((bounds.width - measuredLine.size.width) / 2),
-                    y: floor(
-                        CGFloat(index) * lineHeight
-                            + (lineHeight - measuredLine.size.height) / 2
-                    )
+        // 立即光栅化，而不是交给 NSImage 的 drawingHandler。
+        //
+        // drawingHandler 产生的是惰性的 NSCustomImageRep：AppKit 每次显示状态项都要回调
+        // 重新绘制，并额外走一遍挑选最佳表示的通用路径。这里一次性画进位图，
+        // 之后菜单栏拿到的就是现成的像素。
+        let image = NSImage(size: imageSize)
+        image.lockFocusFlipped(true)
+        let lineHeight = imageSize.height / CGFloat(max(lines.count, 1))
+        for (index, measuredLine) in measuredLines.enumerated() {
+            let origin = NSPoint(
+                x: floor((imageSize.width - measuredLine.size.width) / 2),
+                y: floor(
+                    CGFloat(index) * lineHeight
+                        + (lineHeight - measuredLine.size.height) / 2
                 )
-                measuredLine.text.draw(at: origin, withAttributes: attributes)
-            }
-            return true
-        }
-        image.isTemplate = true
-        return (
-            image,
-            max(
-                AppConfiguration.minimumStatusItemWidth,
-                imageWidth + AppConfiguration.buttonHorizontalPadding
             )
+            measuredLine.text.draw(at: origin, withAttributes: attributes)
+        }
+        image.unlockFocus()
+
+        image.isTemplate = true
+        return image
+    }
+
+    private var fixedStatusItemLength: CGFloat {
+        max(
+            AppConfiguration.minimumStatusItemWidth,
+            fixedImageWidth + AppConfiguration.buttonHorizontalPadding
         )
     }
 
@@ -207,9 +224,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 在主线程消费一次采样：先按需刷新状态项，再决定下一段采样节奏。
     private func applySample(title: String, metrics: SystemMetrics) {
         if lastTitle != title {
-            if let item = statusItem,
-               let button = item.button {
-                setStatusTitle(title, on: button, item: item)
+            if let button = statusItem?.button {
+                setStatusTitle(title, on: button)
             }
             lastTitle = title
         }

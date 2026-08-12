@@ -80,9 +80,30 @@ enum SamplingPolicy {
 }
 
 enum MetricsFormatter {
+    /// 速度与 CPU 字段按固定字符宽度右对齐。
+    ///
+    /// 这不只是排版偏好：状态项宽度一旦随数值变化，菜单栏就要跑一次 Auto Layout 重排，
+    /// 并通过 XPC 把新尺寸同步给 ControlCenter 进程——实测这两项占了常驻 CPU 的绝大部分。
+    /// 字段定宽后状态项宽度恒定，这条昂贵的路径彻底不会触发。
+    private static let speedFieldWidth = 6
+    private static let cpuFieldWidth = 4
+
+    /// 排版可能达到的最宽内容，供状态项预先测量出恒定宽度。
+    static let widestTitle = "↑999.9G CPU\n↓999.9G 100%"
+
     static func statusTitle(_ metrics: SystemMetrics) -> String {
         let cpu = Int(metrics.cpuUsage.rounded())
-        return "↑\(compactSpeed(metrics.uploadBytesPerSecond)) CPU\n↓\(compactSpeed(metrics.downloadBytesPerSecond)) \(cpu)%"
+        let upload = padded(compactSpeed(metrics.uploadBytesPerSecond), to: speedFieldWidth)
+        let download = padded(compactSpeed(metrics.downloadBytesPerSecond), to: speedFieldWidth)
+        let cpuField = padded("\(cpu)%", to: cpuFieldWidth)
+        return "↑\(upload) CPU\n↓\(download) \(cpuField)"
+    }
+
+    /// 左侧补空格至指定字符宽度；超长时原样返回，宁可略微超宽也不截断数值。
+    private static func padded(_ text: String, to width: Int) -> String {
+        let deficit = width - text.count
+        guard deficit > 0 else { return text }
+        return String(repeating: " ", count: deficit) + text
     }
 
     private static func compactSpeed(_ bytesPerSecond: Double) -> String {

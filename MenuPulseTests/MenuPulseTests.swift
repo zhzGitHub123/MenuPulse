@@ -65,7 +65,7 @@ struct MenuPulseTests {
             cpuUsage: 20
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "↑1.5K CPU\n↓6.0K 20%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "↑  1.5K CPU\n↓  6.0K  20%")
     }
 
     @Test func statusTitleSwitchesToWholeNumbersAboveTen() {
@@ -75,7 +75,7 @@ struct MenuPulseTests {
             cpuUsage: 7
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "↑12K CPU\n↓3.5M 7%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "↑   12K CPU\n↓  3.5M   7%")
     }
 
     @Test func statusTitleCoversByteAndGigabyteEnds() {
@@ -85,7 +85,58 @@ struct MenuPulseTests {
             cpuUsage: 100
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "↑0B CPU\n↓2.0G 100%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "↑    0B CPU\n↓  2.0G 100%")
+    }
+
+    /// 定宽排版是状态项宽度恒定的前提，宽度恒定又是避免菜单栏重排的前提，
+    /// 因此这条不变量需要被测试锁住：任意量级的数值都必须渲染出等长的两行。
+    @Test func statusTitleKeepsConstantLineWidthAcrossMagnitudes() {
+        let samples = [
+            SystemMetrics(uploadBytesPerSecond: 0, downloadBytesPerSecond: 0, cpuUsage: 0),
+            SystemMetrics(uploadBytesPerSecond: 999, downloadBytesPerSecond: 1_023, cpuUsage: 5),
+            SystemMetrics(
+                uploadBytesPerSecond: 1_536,
+                downloadBytesPerSecond: 12 * 1_024,
+                cpuUsage: 20
+            ),
+            SystemMetrics(
+                uploadBytesPerSecond: 3.5 * 1_024 * 1_024,
+                downloadBytesPerSecond: 999 * 1_024 * 1_024,
+                cpuUsage: 99
+            ),
+            SystemMetrics(
+                uploadBytesPerSecond: 2 * 1_024 * 1_024 * 1_024,
+                downloadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
+                cpuUsage: 100
+            )
+        ]
+
+        let widths = samples.map { metrics -> [Int] in
+            MetricsFormatter.statusTitle(metrics)
+                .split(separator: "\n", omittingEmptySubsequences: false)
+                .map(\.count)
+        }
+
+        #expect(Set(widths).count == 1, "不同量级的数值渲染出了不同的行宽：\(widths)")
+    }
+
+    /// 预测量用的模板必须覆盖真实排版的最大宽度，否则最宽内容会被裁掉。
+    @Test func widestTitleTemplateBoundsEveryRenderedLine() {
+        let extremes = SystemMetrics(
+            uploadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
+            downloadBytesPerSecond: 999.9 * 1_024 * 1_024 * 1_024,
+            cpuUsage: 100
+        )
+        let templateWidth = MetricsFormatter.widestTitle
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(\.count)
+            .max() ?? 0
+        let renderedWidth = MetricsFormatter.statusTitle(extremes)
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(\.count)
+            .max() ?? 0
+
+        #expect(renderedWidth <= templateWidth)
     }
 
     @Test func idleDetectionRequiresQuietNetworkAndLowCPU() {
