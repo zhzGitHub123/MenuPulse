@@ -1,0 +1,21 @@
+# Xcode 构建产物
+DerivedData/
+build/
+*.xcarchive
+.derived-data-log-*
+
+# Xcode 个人状态（不属于团队共享）
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# 注：.codegraph/ 由该目录自带的 .gitignore 管理（只保留规则文件本身），
+# 此处不再重复排除，否则会连规则文件一起忽略掉。

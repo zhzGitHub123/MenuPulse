@@ -14,19 +14,11 @@
 			remoteGlobalIDString = 9D4A92BF2D1AB0F60099EC1B;
 			remoteInfo = "zhz-app";
 		};
-		9D4A92DC2D1AB0F70099EC1B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 9D4A92B82D1AB0F60099EC1B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 9D4A92BF2D1AB0F60099EC1B;
-			remoteInfo = "zhz-app";
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		9D4A92C02D1AB0F60099EC1B /* zhz-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "zhz-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D4A92D12D1AB0F70099EC1B /* zhz-appTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "zhz-appTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		9D4A92DB2D1AB0F70099EC1B /* zhz-appUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "zhz-appUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -38,11 +30,6 @@
 		9D4A92D42D1AB0F70099EC1B /* zhz-appTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "zhz-appTests";
-			sourceTree = "<group>";
-		};
-		9D4A92DE2D1AB0F70099EC1B /* zhz-appUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "zhz-appUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -62,13 +49,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9D4A92D82D1AB0F70099EC1B /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -77,7 +57,6 @@
 			children = (
 				9D4A92C22D1AB0F60099EC1B /* zhz-app */,
 				9D4A92D42D1AB0F70099EC1B /* zhz-appTests */,
-				9D4A92DE2D1AB0F70099EC1B /* zhz-appUITests */,
 				9D4A92C12D1AB0F60099EC1B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,7 +66,6 @@
 			children = (
 				9D4A92C02D1AB0F60099EC1B /* zhz-app.app */,
 				9D4A92D12D1AB0F70099EC1B /* zhz-appTests.xctest */,
-				9D4A92DB2D1AB0F70099EC1B /* zhz-appUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -140,29 +118,6 @@
 			productReference = 9D4A92D12D1AB0F70099EC1B /* zhz-appTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		9D4A92DA2D1AB0F70099EC1B /* zhz-appUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 9D4A92EB2D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-appUITests" */;
-			buildPhases = (
-				9D4A92D72D1AB0F70099EC1B /* Sources */,
-				9D4A92D82D1AB0F70099EC1B /* Frameworks */,
-				9D4A92D92D1AB0F70099EC1B /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				9D4A92DD2D1AB0F70099EC1B /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				9D4A92DE2D1AB0F70099EC1B /* zhz-appUITests */,
-			);
-			name = "zhz-appUITests";
-			packageProductDependencies = (
-			);
-			productName = "zhz-appUITests";
-			productReference = 9D4A92DB2D1AB0F70099EC1B /* zhz-appUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -177,10 +132,6 @@
 						CreatedOnToolsVersion = 16.1;
 					};
 					9D4A92D02D1AB0F70099EC1B = {
-						CreatedOnToolsVersion = 16.1;
-						TestTargetID = 9D4A92BF2D1AB0F60099EC1B;
-					};
-					9D4A92DA2D1AB0F70099EC1B = {
 						CreatedOnToolsVersion = 16.1;
 						TestTargetID = 9D4A92BF2D1AB0F60099EC1B;
 					};
@@ -202,7 +153,6 @@
 			targets = (
 				9D4A92BF2D1AB0F60099EC1B /* zhz-app */,
 				9D4A92D02D1AB0F70099EC1B /* zhz-appTests */,
-				9D4A92DA2D1AB0F70099EC1B /* zhz-appUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -216,13 +166,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9D4A92CF2D1AB0F70099EC1B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		9D4A92D92D1AB0F70099EC1B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -246,13 +189,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9D4A92D72D1AB0F70099EC1B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -260,11 +196,6 @@
 			isa = PBXTargetDependency;
 			target = 9D4A92BF2D1AB0F60099EC1B /* zhz-app */;
 			targetProxy = 9D4A92D22D1AB0F70099EC1B /* PBXContainerItemProxy */;
-		};
-		9D4A92DD2D1AB0F70099EC1B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 9D4A92BF2D1AB0F60099EC1B /* zhz-app */;
-			targetProxy = 9D4A92DC2D1AB0F70099EC1B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -399,6 +330,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"zhz-app/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -424,6 +356,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"zhz-app/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -471,36 +404,6 @@
 			};
 			name = Release;
 		};
-		9D4A92EC2D1AB0F70099EC1B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-appUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "zhz-app";
-			};
-			name = Debug;
-		};
-		9D4A92ED2D1AB0F70099EC1B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "zhzGitHub123.zhz-appUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "zhz-app";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -527,15 +430,6 @@
 			buildConfigurations = (
 				9D4A92E92D1AB0F70099EC1B /* Debug */,
 				9D4A92EA2D1AB0F70099EC1B /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		9D4A92EB2D1AB0F70099EC1B /* Build configuration list for PBXNativeTarget "zhz-appUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				9D4A92EC2D1AB0F70099EC1B /* Debug */,
-				9D4A92ED2D1AB0F70099EC1B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
