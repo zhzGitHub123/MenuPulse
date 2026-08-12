@@ -1,6 +1,6 @@
 //
 //  SystemMetrics.swift
-//  zhz-app
+//  MenuPulse
 //
 
 import Darwin

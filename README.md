@@ -31,20 +31,18 @@
 ### 用 Xcode 构建
 
 ```
-open zhz-app.xcodeproj
+open MenuPulse.xcodeproj
 ```
 
-选择 `zhz-app` scheme，按 ⌘R 运行。
+选择 `MenuPulse` scheme，按 ⌘R 运行。
 
 ### 用命令行构建
 
 ```
-xcodebuild -project zhz-app.xcodeproj -scheme zhz-app -configuration Release -derivedDataPath DerivedData build
+xcodebuild -project MenuPulse.xcodeproj -scheme MenuPulse -configuration Release -derivedDataPath DerivedData build
 ```
 
-产物位于 `DerivedData/Build/Products/Release/zhz-app.app`，拖进「应用程序」文件夹即可。
-
-> **注**：Xcode 工程名与产物名目前仍是 `zhz-app`，与仓库名 `MenuPulse` 不一致。改名需要同步调整 `PRODUCT_NAME` 与 `PRODUCT_BUNDLE_IDENTIFIER`，暂未处理。
+产物位于 `DerivedData/Build/Products/Release/MenuPulse.app`，拖进「应用程序」文件夹即可。
 
 ## 使用
 

@@ -1,6 +1,6 @@
 //
-//  zhz_appApp.swift
-//  zhz-app
+//  MenuPulseApp.swift
+//  MenuPulse
 //
 
 import AppKit
@@ -35,7 +35,7 @@ enum MonitoringPolicy {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let sampler = SystemSampler()
     private let samplingQueue = DispatchQueue(
-        label: "zhzGitHub123.zhz-app.metrics",
+        label: "io.github.zhzgithub123.MenuPulse.metrics",
         qos: .utility,
         autoreleaseFrequency: .workItem
     )

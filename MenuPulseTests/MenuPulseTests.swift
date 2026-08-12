@@ -1,12 +1,12 @@
 //
-//  zhz_appTests.swift
-//  zhz-appTests
+//  MenuPulseTests.swift
+//  MenuPulseTests
 //
 
 import Testing
-@testable import zhz_app
+@testable import MenuPulse
 
-struct zhz_appTests {
+struct MenuPulseTests {
     @Test func networkRateUsesActualElapsedTime() {
         let rate = MetricsMath.bytesPerSecond(
             current: 5_120,
