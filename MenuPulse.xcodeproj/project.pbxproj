@@ -12,24 +12,24 @@
 			containerPortal = 9D4A92B82D1AB0F60099EC1B /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 9D4A92BF2D1AB0F60099EC1B;
-			remoteInfo = "MenuPulse";
+			remoteInfo = MenuPulse;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		9D4A92C02D1AB0F60099EC1B /* MenuPulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MenuPulse.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		9D4A92D12D1AB0F70099EC1B /* MenuPulseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "MenuPulseTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D4A92C02D1AB0F60099EC1B /* MenuPulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuPulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D4A92D12D1AB0F70099EC1B /* MenuPulseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MenuPulseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9D4A92C22D1AB0F60099EC1B /* MenuPulse */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "MenuPulse";
+			path = MenuPulse;
 			sourceTree = "<group>";
 		};
 		9D4A92D42D1AB0F70099EC1B /* MenuPulseTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "MenuPulseTests";
+			path = MenuPulseTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -88,10 +88,10 @@
 			fileSystemSynchronizedGroups = (
 				9D4A92C22D1AB0F60099EC1B /* MenuPulse */,
 			);
-			name = "MenuPulse";
+			name = MenuPulse;
 			packageProductDependencies = (
 			);
-			productName = "MenuPulse";
+			productName = MenuPulse;
 			productReference = 9D4A92C02D1AB0F60099EC1B /* MenuPulse.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -111,10 +111,10 @@
 			fileSystemSynchronizedGroups = (
 				9D4A92D42D1AB0F70099EC1B /* MenuPulseTests */,
 			);
-			name = "MenuPulseTests";
+			name = MenuPulseTests;
 			packageProductDependencies = (
 			);
-			productName = "MenuPulseTests";
+			productName = MenuPulseTests;
 			productReference = 9D4A92D12D1AB0F70099EC1B /* MenuPulseTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -323,12 +323,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "MenuPulse/MenuPulse.entitlements";
+				CODE_SIGN_ENTITLEMENTS = MenuPulse/MenuPulse.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"MenuPulse/Preview Content\"";
-				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -337,7 +335,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.github.zhzgithub123.MenuPulse";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.zhzgithub123.MenuPulse;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -349,12 +347,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "MenuPulse/MenuPulse.entitlements";
+				CODE_SIGN_ENTITLEMENTS = MenuPulse/MenuPulse.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"MenuPulse/Preview Content\"";
-				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -363,7 +359,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.github.zhzgithub123.MenuPulse";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.zhzgithub123.MenuPulse;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -379,7 +375,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.github.zhzgithub123.MenuPulseTests";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.zhzgithub123.MenuPulseTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -396,7 +392,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.github.zhzgithub123.MenuPulseTests";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.zhzgithub123.MenuPulseTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;

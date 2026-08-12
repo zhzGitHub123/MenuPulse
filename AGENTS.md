@@ -1,4 +1,4 @@
-# zhz-app 项目协作规范
+# MenuPulse 项目协作规范
 
 ## 适用范围
 
@@ -15,22 +15,22 @@
 - 原生 macOS 菜单栏系统监控应用，最低系统版本为 macOS 15.1。
 - 使用 Swift 5、AppKit、Foundation 和 Darwin，不含第三方依赖或 SwiftUI 常驻层。
 - 应用以 accessory 模式运行，不提供普通主窗口；单个紧凑宽度菜单栏项展示网络速度和 CPU 占用。
-- 主方案为 `zhz-app`，包含 `zhz-app`、`zhz-appTests` 和 `zhz-appUITests` 三个目标。
+- 仓库目录名仍为 `zhz-app`，但工程、方案和产物均已更名为 `MenuPulse`。
+- 主方案为 `MenuPulse`，包含 `MenuPulse` 和 `MenuPulseTests` 两个目标；没有 UI 测试目标。
 
 ## 代码地图
 
-- `zhz-app/SystemMetrics.swift`
+- `MenuPulse/SystemMetrics.swift`
   - `SystemSampler`：在串行后台队列通过 `NET_RT_IFLIST2` 读取 `en*` 的 64 位链路层流量，并读取主机 CPU tick。
   - `MetricsMath`：按真实经过时间计算速率，并处理 CPU 计数器回绕。
   - `MetricsFormatter`：生成紧凑双行状态栏文本，是纯函数并由单元测试覆盖。
-- `zhz-app/zhz_appApp.swift`
+- `MenuPulse/MenuPulseApp.swift`
   - `ApplicationMain`：纯 AppKit 入口，避免 SwiftUI 菜单栏应用的持续渲染开销。
   - `AppDelegate`：维护单个 `NSStatusItem`、退出菜单和一个带余量的 `DispatchSourceTimer`。
   - 统一协调状态项可见性、屏幕休眠、会话状态和系统睡眠；仅在状态项可见且没有暂停原因时采集。
-- `zhz-app.xcodeproj/project.pbxproj`：自动生成主 Info.plist，并通过 `INFOPLIST_KEY_LSUIElement = YES` 声明菜单栏应用。
-- `zhz-app/zhz_app.entitlements`：启用 App Sandbox 和用户选择文件的只读权限。
-- `zhz-appTests`：覆盖网络速率、计数器重置、CPU 差值与回绕、文本格式等纯计算逻辑。
-- `zhz-appUITests`：仅保留应用可启动且未立即退出的冒烟测试，不假设菜单栏应用存在普通窗口。
+- `MenuPulse.xcodeproj/project.pbxproj`：自动生成主 Info.plist，并通过 `INFOPLIST_KEY_LSUIElement = YES` 声明菜单栏应用。
+- `MenuPulse/MenuPulse.entitlements`：仅启用 App Sandbox，未额外声明其他权限。
+- `MenuPulseTests`：覆盖网络速率、计数器重置、CPU 差值与回绕、文本格式等纯计算逻辑。
 
 ## CodeGraph 工作流
 
@@ -58,11 +58,11 @@
 
 - Apple 平台工程优先使用项目可用的 Xcode MCP；不可用时再使用 `xcodebuild`。
 - 核对工程结构：
-  - `xcodebuild -list -project zhz-app.xcodeproj`
+  - `xcodebuild -list -project MenuPulse.xcodeproj`
 - Debug 构建：
-  - `xcodebuild -project zhz-app.xcodeproj -scheme zhz-app -configuration Debug -destination 'platform=macOS' build`
+  - `xcodebuild -project MenuPulse.xcodeproj -scheme MenuPulse -configuration Debug -destination 'platform=macOS' build`
 - 运行测试：
-  - `xcodebuild -project zhz-app.xcodeproj -scheme zhz-app -destination 'platform=macOS' test`
+  - `xcodebuild -project MenuPulse.xcodeproj -scheme MenuPulse -destination 'platform=macOS' test`
 - 构建和测试输出应先聚合，只报告成功状态、失败用例、关键错误和必要警告。
 - 改动系统指标计算时，优先补充可重复的纯计算测试；如果需要为可测试性新增协议或注入层，先说明再实施。
 - Release 常驻性能回归基线：本机 macOS 26.6.1 上 40 秒平均 CPU 约 0.50%、内存约 16MB；相关改动不得明显劣化该基线。
@@ -72,4 +72,4 @@
 - 流量统计只包含 `en*` 链路层接口，不包含回环、隧道和虚拟网卡；改变统计口径前应先确认产品需求。
 - 系统调用和休眠恢复流程已有纯计算测试，但仍需在不同硬件和 macOS 版本上做集成与能耗验证。
 - AppIcon 已提供 16–1024 像素完整尺寸；调整生成工具或资源映射后需重新检查资产目录警告。
-- 界面测试只验证启动，不构成网络、CPU 或系统菜单栏交互的业务回归保护；这些逻辑以单元测试和集成验证为准。
+- 没有 UI 测试目标，菜单栏交互、状态项绘制和系统通知响应没有自动化回归保护；这些逻辑只能靠单元测试覆盖纯计算部分，其余以手动集成验证为准。
