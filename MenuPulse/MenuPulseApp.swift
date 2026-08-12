@@ -12,7 +12,7 @@ private enum AppConfiguration {
     static let imageHorizontalPadding: CGFloat = 4
     /// 速度列与 CPU 列之间的间距。等宽字体下一个空格约 5pt，这里按点数给，
     /// 才能调到比一个字符更窄。
-    static let columnSpacing: CGFloat = 4
+    static let columnSpacing: CGFloat = 3
     static let buttonHorizontalPadding: CGFloat = 6
     /// 采样周期。每次刷新状态项的固定成本约 10.4 ms CPU，远高于采样本身的 0.7 ms，
     /// 因此周期长度直接决定常驻能耗；3 秒是在读数跟手感与耗电之间取的平衡点。
