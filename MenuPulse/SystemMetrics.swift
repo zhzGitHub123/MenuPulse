@@ -79,6 +79,34 @@ enum SamplingPolicy {
     }
 }
 
+/// 决定一次采样值得不值得推到菜单栏上。
+///
+/// 实测每次状态项刷新要花约 10.4 ms CPU（光栅化 + Core Animation 提交 + 发往
+/// ControlCenter 的 XPC），而采样本身只要 0.7 ms——常驻能耗几乎全部由刷新次数决定。
+/// 因此这里给数值加一段死区：变化不明显就不刷新，让屏幕上的读数稳住。
+enum DisplayPolicy {
+    /// 低于该绝对变化量一律视为抖动，避免闲置时的零星流量把读数顶得乱跳。
+    static let speedNoiseFloor: Double = 512
+    /// 超过噪声地板后，还需达到这个相对变化才值得刷新。
+    static let relativeSpeedThreshold = 0.15
+    /// CPU 百分比的最小可见变化。
+    static let cpuThreshold: Double = 3
+    /// 连续抑制多少次后无条件刷新一次，确保读数不会长期停在旧值上。
+    static let maxSuppressedUpdates = 5
+
+    static func isSignificantChange(from old: SystemMetrics, to new: SystemMetrics) -> Bool {
+        speedChanged(old.uploadBytesPerSecond, new.uploadBytesPerSecond)
+            || speedChanged(old.downloadBytesPerSecond, new.downloadBytesPerSecond)
+            || abs(old.cpuUsage - new.cpuUsage) >= cpuThreshold
+    }
+
+    private static func speedChanged(_ old: Double, _ new: Double) -> Bool {
+        let delta = abs(new - old)
+        guard delta >= speedNoiseFloor else { return false }
+        return delta >= max(old, new) * relativeSpeedThreshold
+    }
+}
+
 enum MetricsFormatter {
     /// 速度与 CPU 字段按固定字符宽度右对齐。
     ///
@@ -86,17 +114,29 @@ enum MetricsFormatter {
     /// 并通过 XPC 把新尺寸同步给 ControlCenter 进程——实测这两项占了常驻 CPU 的绝大部分。
     /// 字段定宽后状态项宽度恒定，这条昂贵的路径彻底不会触发。
     private static let speedFieldWidth = 6
-    private static let cpuFieldWidth = 4
+    private static let rightFieldWidth = 4
 
     /// 排版可能达到的最宽内容，供状态项预先测量出恒定宽度。
-    static let widestTitle = "↑999.9G CPU\n↓999.9G 100%"
+    static let widestTitle = "999.9G  CPU\n999.9G 100%"
 
+    /// 上行在上、下行在下是菜单栏监控的通用约定，因此不再绘制箭头：
+    /// 省下的字符宽度让两行严格对齐，`CPU` 标签正好落在百分比数值的正上方。
+    /// 方向语义由无障碍标签补全，见 `accessibilityLabel(_:)`。
     static func statusTitle(_ metrics: SystemMetrics) -> String {
         let cpu = Int(metrics.cpuUsage.rounded())
         let upload = padded(compactSpeed(metrics.uploadBytesPerSecond), to: speedFieldWidth)
         let download = padded(compactSpeed(metrics.downloadBytesPerSecond), to: speedFieldWidth)
-        let cpuField = padded("\(cpu)%", to: cpuFieldWidth)
-        return "↑\(upload) CPU\n↓\(download) \(cpuField)"
+        let label = padded("CPU", to: rightFieldWidth)
+        let cpuField = padded("\(cpu)%", to: rightFieldWidth)
+        return "\(upload) \(label)\n\(download) \(cpuField)"
+    }
+
+    /// 状态项本身不再有方向标记，VoiceOver 的朗读文本必须自己讲清上下行。
+    static func accessibilityLabel(_ metrics: SystemMetrics) -> String {
+        let cpu = Int(metrics.cpuUsage.rounded())
+        let upload = compactSpeed(metrics.uploadBytesPerSecond)
+        let download = compactSpeed(metrics.downloadBytesPerSecond)
+        return "上传 \(upload) 每秒，下载 \(download) 每秒，CPU 占用 \(cpu)%"
     }
 
     /// 左侧补空格至指定字符宽度；超长时原样返回，宁可略微超宽也不截断数值。

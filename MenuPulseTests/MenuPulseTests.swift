@@ -65,7 +65,7 @@ struct MenuPulseTests {
             cpuUsage: 20
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "↑  1.5K CPU\n↓  6.0K  20%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "  1.5K  CPU\n  6.0K  20%")
     }
 
     @Test func statusTitleSwitchesToWholeNumbersAboveTen() {
@@ -75,7 +75,7 @@ struct MenuPulseTests {
             cpuUsage: 7
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "↑   12K CPU\n↓  3.5M   7%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "   12K  CPU\n  3.5M   7%")
     }
 
     @Test func statusTitleCoversByteAndGigabyteEnds() {
@@ -85,7 +85,99 @@ struct MenuPulseTests {
             cpuUsage: 100
         )
 
-        #expect(MetricsFormatter.statusTitle(metrics) == "↑    0B CPU\n↓  2.0G 100%")
+        #expect(MetricsFormatter.statusTitle(metrics) == "    0B  CPU\n  2.0G 100%")
+    }
+
+    /// 去掉方向箭头后，`CPU` 标签必须正好落在百分比数值的正上方，两行才对得齐。
+    @Test func statusTitleAlignsLabelAboveCPUValue() {
+        let metrics = SystemMetrics(
+            uploadBytesPerSecond: 1_536,
+            downloadBytesPerSecond: 6_144,
+            cpuUsage: 20
+        )
+        let lines = MetricsFormatter.statusTitle(metrics)
+            .split(separator: "\n", omittingEmptySubsequences: false)
+
+        #expect(lines.count == 2)
+        #expect(lines[0].count == lines[1].count)
+    }
+
+    /// 状态项本身没有方向标记，朗读文本必须补足上行、下行的语义。
+    @Test func accessibilityLabelSpellsOutDirections() {
+        let metrics = SystemMetrics(
+            uploadBytesPerSecond: 1_536,
+            downloadBytesPerSecond: 6_144,
+            cpuUsage: 20
+        )
+        let label = MetricsFormatter.accessibilityLabel(metrics)
+
+        #expect(label.contains("上传"))
+        #expect(label.contains("下载"))
+        #expect(label.contains("1.5K"))
+        #expect(label.contains("6.0K"))
+        #expect(label.contains("20%"))
+    }
+
+    @Test func minorFluctuationsDoNotCountAsSignificantChange() {
+        let displayed = SystemMetrics(
+            uploadBytesPerSecond: 100_000,
+            downloadBytesPerSecond: 200_000,
+            cpuUsage: 17
+        )
+        let jitter = SystemMetrics(
+            uploadBytesPerSecond: 103_000,
+            downloadBytesPerSecond: 205_000,
+            cpuUsage: 18
+        )
+
+        #expect(DisplayPolicy.isSignificantChange(from: displayed, to: jitter) == false)
+    }
+
+    @Test func largeSpeedSwingCountsAsSignificantChange() {
+        let displayed = SystemMetrics(
+            uploadBytesPerSecond: 100_000,
+            downloadBytesPerSecond: 200_000,
+            cpuUsage: 17
+        )
+        let surge = SystemMetrics(
+            uploadBytesPerSecond: 100_000,
+            downloadBytesPerSecond: 800_000,
+            cpuUsage: 17
+        )
+
+        #expect(DisplayPolicy.isSignificantChange(from: displayed, to: surge))
+    }
+
+    /// 低速区间靠绝对噪声地板兜底：几百字节的零星流量不应把读数顶得乱跳，
+    /// 哪怕它在相对比例上是成倍变化。
+    @Test func tinyAbsoluteChangesStayBelowNoiseFloor() {
+        let quiet = SystemMetrics(
+            uploadBytesPerSecond: 40,
+            downloadBytesPerSecond: 60,
+            cpuUsage: 4
+        )
+        let stillQuiet = SystemMetrics(
+            uploadBytesPerSecond: 300,
+            downloadBytesPerSecond: 400,
+            cpuUsage: 5
+        )
+
+        #expect(DisplayPolicy.isSignificantChange(from: quiet, to: stillQuiet) == false)
+    }
+
+    @Test func cpuMovementAloneCanTriggerRefresh() {
+        let displayed = SystemMetrics(
+            uploadBytesPerSecond: 0,
+            downloadBytesPerSecond: 0,
+            cpuUsage: 10
+        )
+        let busier = SystemMetrics(
+            uploadBytesPerSecond: 0,
+            downloadBytesPerSecond: 0,
+            cpuUsage: 40
+        )
+
+        #expect(DisplayPolicy.isSignificantChange(from: displayed, to: busier))
     }
 
     /// 定宽排版是状态项宽度恒定的前提，宽度恒定又是避免菜单栏重排的前提，

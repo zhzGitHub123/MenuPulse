@@ -11,11 +11,13 @@ private enum AppConfiguration {
     static let statusImageHeight: CGFloat = 20
     static let imageHorizontalPadding: CGFloat = 4
     static let buttonHorizontalPadding: CGFloat = 6
-    static let samplingInterval: DispatchTimeInterval = .seconds(2)
-    static let samplingLeeway: DispatchTimeInterval = .milliseconds(400)
+    /// 采样周期。每次刷新状态项的固定成本约 10.4 ms CPU，远高于采样本身的 0.7 ms，
+    /// 因此周期长度直接决定常驻能耗；3 秒是在读数跟手感与耗电之间取的平衡点。
+    static let samplingInterval: DispatchTimeInterval = .seconds(3)
+    static let samplingLeeway: DispatchTimeInterval = .milliseconds(600)
     /// 闲置时的采样节奏：更长的间隔配更大的余量，便于系统合并唤醒。
-    static let idleSamplingInterval: DispatchTimeInterval = .seconds(5)
-    static let idleSamplingLeeway: DispatchTimeInterval = .milliseconds(1_500)
+    static let idleSamplingInterval: DispatchTimeInterval = .seconds(8)
+    static let idleSamplingLeeway: DispatchTimeInterval = .seconds(2)
 }
 
 struct MonitoringSuspensionReasons: OptionSet, Sendable {
@@ -56,6 +58,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var suspensionReasons: MonitoringSuspensionReasons = []
     private var idleStreak = 0
     private var isUsingIdleCadence = false
+    /// 当前显示在菜单栏上的那次采样，作为判断后续变化是否值得刷新的基准。
+    private var displayedMetrics: SystemMetrics?
+    private var suppressedUpdates = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
@@ -90,18 +95,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.imagePosition = .imageOnly
         button.imageScaling = .scaleNone
         let title = MetricsFormatter.statusTitle(initialMetrics)
-        setStatusTitle(title, on: button)
-        button.toolTip = "实时网络速度与 CPU 占用"
+        setStatusTitle(title, metrics: initialMetrics, on: button)
+        button.toolTip = "实时网络速度与 CPU 占用（上行在上，下行在下）"
 
         item.menu = makeMenu()
         statusItem = item
         lastTitle = title
+        displayedMetrics = initialMetrics
     }
 
-    private func setStatusTitle(_ title: String, on button: NSButton) {
+    private func setStatusTitle(
+        _ title: String,
+        metrics: SystemMetrics,
+        on button: NSButton
+    ) {
         button.title = ""
         button.image = makeStatusImage(title)
-        button.setAccessibilityLabel(title.replacingOccurrences(of: "\n", with: "，"))
+        button.setAccessibilityLabel(MetricsFormatter.accessibilityLabel(metrics))
     }
 
     /// 状态项的恒定宽度，按排版可能达到的最宽内容测量一次后缓存。
@@ -223,14 +233,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// 在主线程消费一次采样：先按需刷新状态项，再决定下一段采样节奏。
     private func applySample(title: String, metrics: SystemMetrics) {
-        if lastTitle != title {
-            if let button = statusItem?.button {
-                setStatusTitle(title, on: button)
+        if shouldRefreshDisplay(for: metrics) {
+            if lastTitle != title,
+               let button = statusItem?.button {
+                setStatusTitle(title, metrics: metrics, on: button)
+                lastTitle = title
             }
-            lastTitle = title
+            displayedMetrics = metrics
+            suppressedUpdates = 0
+        } else {
+            suppressedUpdates += 1
         }
 
         updateSamplingCadence(for: metrics)
+    }
+
+    /// 刷新状态项是常驻能耗的绝对大头，因此只有变化足够明显时才值得付这笔开销；
+    /// 连续抑制到上限后强制放行一次，避免读数长期停在旧值上。
+    private func shouldRefreshDisplay(for metrics: SystemMetrics) -> Bool {
+        guard let displayedMetrics else { return true }
+        guard suppressedUpdates < DisplayPolicy.maxSuppressedUpdates else { return true }
+        return DisplayPolicy.isSignificantChange(from: displayedMetrics, to: metrics)
     }
 
     private func updateSamplingCadence(for metrics: SystemMetrics) {

@@ -15,7 +15,7 @@ Two lines of monospaced text in a compact block. No main window, no Dock icon �
 - **Power aware** — sampling pauses on screen sleep, session switch, and system sleep, and resumes on wake
 - **Idle throttling** — when the network is quiet and the CPU is idle, the sampling interval stretches out to cut wakeups
 - **Adaptive appearance** — the status item renders as a template image and follows the light/dark menu bar automatically
-- **Stable width** — the status bar width adjusts smoothly as values grow and shrink, without jitter
+- **Rock-steady width** — fields are fixed-width, so the status item never resizes and never nudges the icons next to it
 - **Accessible** — full VoiceOver labels
 - **Zero dependencies** — pure AppKit, no third-party libraries
 - **Sandboxed** — App Sandbox enabled, requests only what it needs
@@ -27,9 +27,15 @@ A menu bar monitor that costs you measurable battery life defeats its own purpos
 | | Measured |
 | --- | --- |
 | Memory footprint | **14 MB** (`phys_footprint`, peak equals steady state) |
-| CPU while sampling | **~0.6%** of one core, over a 300 s window — the scale Activity Monitor reports |
+| CPU, busy machine | **~0.47%** of one core over a 300 s window, with live network traffic |
+| — app's own sampling | **0.033%** — reading the counters costs 0.7 ms per sample |
+| — menu bar refresh | the rest, a fixed **~10 ms per refresh** that AppKit charges to hand a new image to the menu bar |
 | Executable size | **233 KB** |
 | Third-party dependencies | **0** |
+
+That second breakdown is the honest part of this table. **94% of the cost is not our code** — it's the price macOS charges for putting anything new in the menu bar (rasterization, a Core Animation commit, and an XPC round trip to ControlCenter). Verify it yourself: `sample MenuPulse 60` and look at where the main thread's non-idle frames land.
+
+That number also sets the strategy. Micro-optimizing the sampling path is pointless when it is already 6% of the total; the only lever that moves the needle is **refreshing less often**, which is what the significance threshold and idle throttling below are for. On an idle machine, where the threshold suppresses most updates and the interval stretches to 8 seconds, the figure drops well below the number above.
 
 Where that comes from:
 
@@ -107,10 +113,11 @@ Counter wraparound is handled differently for each metric:
 
 ### Sampling strategy
 
-- Base interval is **2 seconds**, with **400 ms** of leeway so the system can coalesce wakeups
-- When both directions stay under **1 KB/s** and CPU stays under **10%** for **5 consecutive samples**, the app switches to a longer idle cadence with more leeway. Any activity resets the streak immediately, so the next sample is back at full rate
+- Base interval is **3 seconds**, with **600 ms** of leeway so the system can coalesce wakeups
+- **Significance threshold** — a sample only reaches the menu bar if it differs meaningfully from what's already displayed: speed must move by both 512 B/s *and* 15%, or CPU by 3 points. After five suppressed samples one is forced through, so the reading never goes stale. This matters more than any other tuning, because the cost is per *refresh*, not per sample
+- When both directions stay under **1 KB/s** and CPU stays under **10%** for **5 consecutive samples**, the interval stretches to **8 seconds** with 2 s of leeway. Any activity resets the streak immediately
 - Sampling runs on a dedicated `utility` QoS queue and never blocks the main thread
-- The status bar is redrawn only when the title actually changes
+- The status bar is redrawn only when the rendered title actually changes
 
 ### Pause conditions
 
