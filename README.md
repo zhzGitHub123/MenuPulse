@@ -4,10 +4,7 @@
 
 A minimal macOS menu bar monitor that shows **network throughput** and **CPU usage** in real time, right in your status bar.
 
-```
-↑1.2M  CPU
-↓15.3M  23%
-```
+![MenuPulse sitting in the macOS menu bar](docs/screenshot.png)
 
 Two lines of monospaced text in a compact block. No main window, no Dock icon — install it and forget it's there.
 
