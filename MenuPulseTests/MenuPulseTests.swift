@@ -58,12 +58,6 @@ struct MenuPulseTests {
         #expect(delta == 10)
     }
 
-    @Test func speedFormattingUsesBinaryUnits() {
-        #expect(MetricsFormatter.speed(0) == "0B/s")
-        #expect(MetricsFormatter.speed(1_024) == "1.0KB/s")
-        #expect(MetricsFormatter.speed(1_024 * 1_024) == "1.0MB/s")
-    }
-
     @Test func statusTitleUsesCompactTwoLineLayout() {
         let metrics = SystemMetrics(
             uploadBytesPerSecond: 1_536,
@@ -72,6 +66,71 @@ struct MenuPulseTests {
         )
 
         #expect(MetricsFormatter.statusTitle(metrics) == "↑1.5K CPU\n↓6.0K 20%")
+    }
+
+    @Test func statusTitleSwitchesToWholeNumbersAboveTen() {
+        let metrics = SystemMetrics(
+            uploadBytesPerSecond: 12 * 1_024,
+            downloadBytesPerSecond: 3.5 * 1_024 * 1_024,
+            cpuUsage: 7
+        )
+
+        #expect(MetricsFormatter.statusTitle(metrics) == "↑12K CPU\n↓3.5M 7%")
+    }
+
+    @Test func statusTitleCoversByteAndGigabyteEnds() {
+        let metrics = SystemMetrics(
+            uploadBytesPerSecond: 0,
+            downloadBytesPerSecond: 2 * 1_024 * 1_024 * 1_024,
+            cpuUsage: 100
+        )
+
+        #expect(MetricsFormatter.statusTitle(metrics) == "↑0B CPU\n↓2.0G 100%")
+    }
+
+    @Test func idleDetectionRequiresQuietNetworkAndLowCPU() {
+        let quiet = SystemMetrics(
+            uploadBytesPerSecond: 200,
+            downloadBytesPerSecond: 300,
+            cpuUsage: 4
+        )
+        #expect(SamplingPolicy.isIdle(quiet))
+
+        let busyNetwork = SystemMetrics(
+            uploadBytesPerSecond: 200,
+            downloadBytesPerSecond: 8_192,
+            cpuUsage: 4
+        )
+        #expect(!SamplingPolicy.isIdle(busyNetwork))
+
+        let busyCPU = SystemMetrics(
+            uploadBytesPerSecond: 200,
+            downloadBytesPerSecond: 300,
+            cpuUsage: 45
+        )
+        #expect(!SamplingPolicy.isIdle(busyCPU))
+    }
+
+    @Test func idleCadenceEngagesOnlyAfterSustainedIdleness() {
+        var streak = 0
+
+        for _ in 0..<(SamplingPolicy.idleStreakThreshold - 1) {
+            streak = SamplingPolicy.nextIdleStreak(current: streak, isIdle: true)
+            #expect(!SamplingPolicy.shouldUseIdleCadence(idleStreak: streak))
+        }
+
+        streak = SamplingPolicy.nextIdleStreak(current: streak, isIdle: true)
+        #expect(SamplingPolicy.shouldUseIdleCadence(idleStreak: streak))
+    }
+
+    @Test func activitySampleRestoresHighFrequencyImmediately() {
+        let streak = SamplingPolicy.nextIdleStreak(
+            current: SamplingPolicy.idleStreakThreshold,
+            isIdle: false
+        )
+
+        #expect(streak == 0)
+        #expect(!SamplingPolicy.shouldUseIdleCadence(idleStreak: streak))
     }
 
     @Test func hiddenStatusItemDoesNotResumeMonitoringAfterWake() {

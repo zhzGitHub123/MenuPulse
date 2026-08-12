@@ -13,6 +13,9 @@ private enum AppConfiguration {
     static let buttonHorizontalPadding: CGFloat = 6
     static let samplingInterval: DispatchTimeInterval = .seconds(2)
     static let samplingLeeway: DispatchTimeInterval = .milliseconds(400)
+    /// 闲置时的采样节奏：更长的间隔配更大的余量，便于系统合并唤醒。
+    static let idleSamplingInterval: DispatchTimeInterval = .seconds(5)
+    static let idleSamplingLeeway: DispatchTimeInterval = .milliseconds(1_500)
 }
 
 struct MonitoringSuspensionReasons: OptionSet, Sendable {
@@ -34,6 +37,10 @@ enum MonitoringPolicy {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let sampler = SystemSampler()
+    private let statusTextAttributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.monospacedSystemFont(ofSize: 8.5, weight: .regular),
+        .foregroundColor: NSColor.black
+    ]
     private let samplingQueue = DispatchQueue(
         label: "io.github.zhzgithub123.MenuPulse.metrics",
         qos: .utility,
@@ -47,6 +54,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var monitoringGeneration = 0
     private var lastTitle = ""
     private var suspensionReasons: MonitoringSuspensionReasons = []
+    private var idleStreak = 0
+    private var isUsingIdleCadence = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
@@ -101,10 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeStatusImage(_ title: String) -> (image: NSImage, itemWidth: CGFloat) {
         let lines = title.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedSystemFont(ofSize: 8.5, weight: .regular),
-            .foregroundColor: NSColor.black
-        ]
+        let attributes = statusTextAttributes
         let measuredLines = lines.prefix(2).map { line in
             let text = line as NSString
             return (text: text, size: text.size(withAttributes: attributes))
@@ -160,6 +166,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sampler.reset()
         }
 
+        idleStreak = 0
+        isUsingIdleCadence = false
+
         let timer = DispatchSource.makeTimerSource(queue: samplingQueue)
         timer.schedule(
             deadline: .now(),
@@ -175,16 +184,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let title = MetricsFormatter.statusTitle(metrics)
             DispatchQueue.main.async { [weak self] in
                 guard let self,
-                      self.monitoringGeneration == generation,
-                      self.lastTitle != title else {
+                      self.monitoringGeneration == generation else {
                     return
                 }
 
-                if let item = self.statusItem,
-                   let button = item.button {
-                    self.setStatusTitle(title, on: button, item: item)
-                }
-                self.lastTitle = title
+                self.applySample(title: title, metrics: metrics)
             }
         }
 
@@ -198,6 +202,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         monitoringGeneration &+= 1
         samplingTimer?.cancel()
         samplingTimer = nil
+    }
+
+    /// 在主线程消费一次采样：先按需刷新状态项，再决定下一段采样节奏。
+    private func applySample(title: String, metrics: SystemMetrics) {
+        if lastTitle != title {
+            if let item = statusItem,
+               let button = item.button {
+                setStatusTitle(title, on: button, item: item)
+            }
+            lastTitle = title
+        }
+
+        updateSamplingCadence(for: metrics)
+    }
+
+    private func updateSamplingCadence(for metrics: SystemMetrics) {
+        idleStreak = SamplingPolicy.nextIdleStreak(
+            current: idleStreak,
+            isIdle: SamplingPolicy.isIdle(metrics)
+        )
+
+        let useIdleCadence = SamplingPolicy.shouldUseIdleCadence(idleStreak: idleStreak)
+        guard useIdleCadence != isUsingIdleCadence,
+              let timer = samplingTimer else {
+            return
+        }
+
+        isUsingIdleCadence = useIdleCadence
+        let interval = useIdleCadence
+            ? AppConfiguration.idleSamplingInterval
+            : AppConfiguration.samplingInterval
+        let leeway = useIdleCadence
+            ? AppConfiguration.idleSamplingLeeway
+            : AppConfiguration.samplingLeeway
+        timer.schedule(deadline: .now() + interval, repeating: interval, leeway: leeway)
     }
 
     private func registerWorkspaceObservers() {

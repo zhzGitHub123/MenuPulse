@@ -46,27 +46,40 @@ enum MetricsMath {
         previous: UInt64,
         maximum: UInt64 = UInt64(UInt32.max)
     ) -> UInt64 {
-        guard current < previous else { return current - previous }
+        if current >= previous {
+            return current - previous
+        }
+        // 计数器回绕：补上从 previous 走到 maximum 再回到 current 的距离。
         return maximum - previous + current + 1
     }
 }
 
-enum MetricsFormatter {
-    static func speed(_ bytesPerSecond: Double) -> String {
-        let value = bytesPerSecond.isFinite ? max(bytesPerSecond, 0) : 0
+/// 采样节奏策略：系统闲置时拉长采样间隔，降低常驻唤醒带来的能耗。
+enum SamplingPolicy {
+    /// 上下行都低于该速率时视为网络静默；后台心跳流量不足以算作活跃。
+    static let idleNetworkBytesPerSecond: Double = 1_024
+    /// CPU 低于该占用率时视为计算闲置。
+    static let idleCPUUsage: Double = 10
+    /// 连续多少次闲置采样后才退避，避免瞬时静默导致节奏来回抖动。
+    static let idleStreakThreshold = 5
 
-        switch value {
-        case ..<1_024:
-            return "\(Int(value.rounded()))B/s"
-        case ..<(1_024 * 1_024):
-            return String(format: "%.1fKB/s", value / 1_024)
-        case ..<(1_024 * 1_024 * 1_024):
-            return String(format: "%.1fMB/s", value / (1_024 * 1_024))
-        default:
-            return String(format: "%.1fGB/s", value / (1_024 * 1_024 * 1_024))
-        }
+    static func isIdle(_ metrics: SystemMetrics) -> Bool {
+        metrics.uploadBytesPerSecond < idleNetworkBytesPerSecond
+            && metrics.downloadBytesPerSecond < idleNetworkBytesPerSecond
+            && metrics.cpuUsage < idleCPUUsage
     }
 
+    /// 闲置一次累加一格，只要出现活跃立刻清零，从而下一次采样即恢复高频。
+    static func nextIdleStreak(current: Int, isIdle: Bool) -> Int {
+        isIdle ? min(current + 1, idleStreakThreshold) : 0
+    }
+
+    static func shouldUseIdleCadence(idleStreak: Int) -> Bool {
+        idleStreak >= idleStreakThreshold
+    }
+}
+
+enum MetricsFormatter {
     static func statusTitle(_ metrics: SystemMetrics) -> String {
         let cpu = Int(metrics.cpuUsage.rounded())
         return "↑\(compactSpeed(metrics.uploadBytesPerSecond)) CPU\n↓\(compactSpeed(metrics.downloadBytesPerSecond)) \(cpu)%"
