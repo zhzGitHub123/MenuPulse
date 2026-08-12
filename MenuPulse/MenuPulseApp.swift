@@ -7,7 +7,9 @@ import AppKit
 import Foundation
 
 private enum AppConfiguration {
-    static let minimumStatusItemWidth: CGFloat = 50
+    /// 状态项的宽度下限。仅用于兜底，正常读数下实际宽度都由内容决定，
+    /// 定得过大会在短读数时把状态项撑出空白。
+    static let minimumStatusItemWidth: CGFloat = 38
     static let statusImageHeight: CGFloat = 20
     static let imageHorizontalPadding: CGFloat = 4
     /// 速度列与 CPU 列之间的间距。等宽字体下一个空格约 5pt，这里按点数给，
@@ -86,7 +88,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: fixedStatusItemLength)
+        let item = NSStatusBar.system.statusItem(
+            withLength: AppConfiguration.minimumStatusItemWidth
+        )
         guard let button = item.button else { return }
 
         let initialMetrics = SystemMetrics(
@@ -98,7 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.imagePosition = .imageOnly
         button.imageScaling = .scaleNone
         let title = MetricsFormatter.statusTitle(initialMetrics)
-        setStatusTitle(title, metrics: initialMetrics, on: button)
+        setStatusTitle(title, metrics: initialMetrics, on: item)
         button.toolTip = "实时网络速度与 CPU 占用（上行在上，下行在下）"
 
         item.menu = makeMenu()
@@ -110,52 +114,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setStatusTitle(
         _ title: String,
         metrics: SystemMetrics,
-        on button: NSButton
+        on item: NSStatusItem
     ) {
+        guard let button = item.button else { return }
+
+        let rendered = makeStatusImage(title)
         button.title = ""
-        button.image = makeStatusImage(title)
+        button.image = rendered.image
         button.setAccessibilityLabel(MetricsFormatter.accessibilityLabel(metrics))
+        if abs(item.length - rendered.itemWidth) >= 0.5 {
+            item.length = rendered.itemWidth
+        }
     }
 
-    /// 两列各自的恒定宽度，按排版可能达到的最宽内容测量一次后缓存。
+    /// 按当前读数实际占的宽度排版，不做任何预留。
     ///
-    /// 一次性算出宽度是刻意的：只要 `NSStatusItem.length` 不再变化，菜单栏就不会重排，
-    /// 也不会向 ControlCenter 发送尺寸同步的 XPC 消息。
-    private lazy var columnLayout: (left: CGFloat, right: CGFloat, imageWidth: CGFloat) = {
+    /// 曾经改成按最宽内容（`1023G`）固定预留，好处是 `NSStatusItem.length` 恒定、
+    /// 菜单栏不再重排，实测省下约 10% 的常驻 CPU；代价是短读数左边永远空着两格，
+    /// 状态项明显变胖。省下的那点开销买不回这份紧凑，所以退回自适应。
+    private func makeStatusImage(_ title: String) -> (image: NSImage, itemWidth: CGFloat) {
         let attributes = statusTextAttributes
-        var left: CGFloat = 0
-        var right: CGFloat = 0
+        let measured = title
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .prefix(2)
+            .map { line -> (left: NSString, right: NSString, leftSize: NSSize, rightSize: NSSize) in
+                let columns = MetricsFormatter.columns(of: line)
+                let left = columns.left as NSString
+                let right = columns.right as NSString
+                return (
+                    left,
+                    right,
+                    left.size(withAttributes: attributes),
+                    right.size(withAttributes: attributes)
+                )
+            }
 
-        for line in MetricsFormatter.widestTitle.split(
-            separator: "\n",
-            omittingEmptySubsequences: false
-        ) {
-            let columns = MetricsFormatter.columns(of: line)
-            left = max(left, (columns.left as NSString).size(withAttributes: attributes).width)
-            right = max(right, (columns.right as NSString).size(withAttributes: attributes).width)
-        }
-
-        left = ceil(left)
-        right = ceil(right)
-        return (
-            left,
-            right,
-            left + AppConfiguration.columnSpacing + right
-                + AppConfiguration.imageHorizontalPadding
-        )
-    }()
-
-    private func makeStatusImage(_ title: String) -> NSImage {
-        let lines = title.split(separator: "\n", omittingEmptySubsequences: false)
-        let attributes = statusTextAttributes
-        let layout = columnLayout
+        let leftColumn = ceil(measured.map(\.leftSize.width).max() ?? 0)
+        let rightColumn = ceil(measured.map(\.rightSize.width).max() ?? 0)
         let imageSize = NSSize(
-            width: layout.imageWidth,
+            width: leftColumn + AppConfiguration.columnSpacing + rightColumn
+                + AppConfiguration.imageHorizontalPadding,
             height: AppConfiguration.statusImageHeight
         )
         let contentOrigin = AppConfiguration.imageHorizontalPadding / 2
-        let leftColumnEdge = contentOrigin + layout.left
-        let rightColumnEdge = leftColumnEdge + AppConfiguration.columnSpacing + layout.right
+        let leftColumnEdge = contentOrigin + leftColumn
+        let rightColumnEdge = leftColumnEdge + AppConfiguration.columnSpacing + rightColumn
 
         // 立即光栅化，而不是交给 NSImage 的 drawingHandler。
         //
@@ -164,19 +167,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 之后菜单栏拿到的就是现成的像素。
         let image = NSImage(size: imageSize)
         image.lockFocusFlipped(true)
-        let lineHeight = imageSize.height / CGFloat(max(lines.count, 1))
-        for (index, line) in lines.prefix(2).enumerated() {
-            let columns = MetricsFormatter.columns(of: line)
+        let lineHeight = imageSize.height / CGFloat(max(measured.count, 1))
+        for (index, line) in measured.enumerated() {
             let lineTop = CGFloat(index) * lineHeight
-            drawRightAligned(
-                columns.left,
+            draw(
+                line.left,
+                size: line.leftSize,
                 rightEdge: leftColumnEdge,
                 lineTop: lineTop,
                 lineHeight: lineHeight,
                 attributes: attributes
             )
-            drawRightAligned(
-                columns.right,
+            draw(
+                line.right,
+                size: line.rightSize,
                 rightEdge: rightColumnEdge,
                 lineTop: lineTop,
                 lineHeight: lineHeight,
@@ -186,34 +190,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         image.unlockFocus()
 
         image.isTemplate = true
-        return image
+        return (
+            image,
+            max(
+                AppConfiguration.minimumStatusItemWidth,
+                imageSize.width + AppConfiguration.buttonHorizontalPadding
+            )
+        )
     }
 
-    /// 两列都靠各自的右边缘对齐：速度的个位、CPU 的百分号因此始终停在同一条竖线上，
-    /// 数值位数变化时读数不会左右横跳。
-    private func drawRightAligned(
-        _ text: String,
+    /// 两列都靠各自的右边缘对齐：速度的个位、CPU 的百分号因此停在同一条竖线上，
+    /// 两行之间不会因为位数不同而错开。
+    private func draw(
+        _ content: NSString,
+        size: NSSize,
         rightEdge: CGFloat,
         lineTop: CGFloat,
         lineHeight: CGFloat,
         attributes: [NSAttributedString.Key: Any]
     ) {
-        guard !text.isEmpty else { return }
+        guard content.length > 0 else { return }
 
-        let content = text as NSString
-        let size = content.size(withAttributes: attributes)
         let origin = NSPoint(
             x: floor(rightEdge - size.width),
             y: floor(lineTop + (lineHeight - size.height) / 2)
         )
         content.draw(at: origin, withAttributes: attributes)
-    }
-
-    private var fixedStatusItemLength: CGFloat {
-        max(
-            AppConfiguration.minimumStatusItemWidth,
-            columnLayout.imageWidth + AppConfiguration.buttonHorizontalPadding
-        )
     }
 
     private func makeMenu() -> NSMenu {
@@ -281,8 +283,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func applySample(title: String, metrics: SystemMetrics) {
         if shouldRefreshDisplay(for: metrics) {
             if lastTitle != title,
-               let button = statusItem?.button {
-                setStatusTitle(title, metrics: metrics, on: button)
+               let item = statusItem {
+                setStatusTitle(title, metrics: metrics, on: item)
                 lastTitle = title
             }
             displayedMetrics = metrics

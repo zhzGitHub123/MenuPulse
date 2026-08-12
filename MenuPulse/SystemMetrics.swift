@@ -117,13 +117,6 @@ enum MetricsFormatter {
     /// 等宽字体下一个空格约 5pt，用字符当间距只能按整格跳，调不细。
     static let columnSeparator: Character = "\t"
 
-    /// 排版可能达到的最宽内容，供状态项预先测量出每列的恒定宽度。
-    ///
-    /// 速度列取 5 个字符：`compactSpeed` 小于 10 时保留一位小数、否则取整，
-    /// 而数值一到 1024 就进位换单位，因此最长形态是 `1023K` 这样的五字符，
-    /// 不存在六字符的输出。多预留一格会让右对齐的数字左边永远空着。
-    static let widestTitle = "1023G\tCPU\n1023G\t100%"
-
     /// 上行在上、下行在下是菜单栏监控的通用约定，因此不再绘制箭头。
     /// 方向语义由无障碍标签补全，见 `accessibilityLabel(_:)`。
     static func statusTitle(_ metrics: SystemMetrics) -> String {

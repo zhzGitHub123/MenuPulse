@@ -196,10 +196,10 @@ struct MenuPulseTests {
         #expect(DisplayPolicy.isSignificantChange(from: displayed, to: busier))
     }
 
-    /// 状态项宽度由模板逐列预先测量得出，此后不再变化——这是避免菜单栏重排的前提。
-    /// 因此任何量级的读数，每一列都不能超出模板对应列的宽度，否则会被裁掉。
-    /// 等宽字体下字符数与渲染宽度成正比，可以直接用字符数比较。
-    @Test func widestTitleTemplateBoundsEveryColumn() {
+    /// 状态项宽度随读数自适应，速度列的最大字符数因此决定了它能胖到什么程度。
+    /// `compactSpeed` 小于 10 时保留一位小数、否则取整，而数值一到 1024 就进位换单位，
+    /// 所以最长形态是 `1023K` 这样的五个字符。这条一旦被破坏，菜单栏会在极端读数下变宽。
+    @Test func speedColumnNeverExceedsFiveCharacters() {
         let samples = [
             SystemMetrics(uploadBytesPerSecond: 0, downloadBytesPerSecond: 0, cpuUsage: 0),
             SystemMetrics(uploadBytesPerSecond: 999, downloadBytesPerSecond: 1_023, cpuUsage: 5),
@@ -220,27 +220,19 @@ struct MenuPulseTests {
             )
         ]
 
-        func widestColumns(of title: String) -> (left: Int, right: Int) {
-            title.split(separator: "\n", omittingEmptySubsequences: false)
-                .map(MetricsFormatter.columns(of:))
-                .reduce(into: (left: 0, right: 0)) { widest, columns in
-                    widest.left = max(widest.left, columns.left.count)
-                    widest.right = max(widest.right, columns.right.count)
-                }
-        }
-
-        let template = widestColumns(of: MetricsFormatter.widestTitle)
-
         for metrics in samples {
-            let rendered = widestColumns(of: MetricsFormatter.statusTitle(metrics))
-            #expect(
-                rendered.left <= template.left,
-                "速度列超出模板宽度：\(rendered.left) > \(template.left)"
-            )
-            #expect(
-                rendered.right <= template.right,
-                "CPU 列超出模板宽度：\(rendered.right) > \(template.right)"
-            )
+            for line in MetricsFormatter.statusTitle(metrics)
+                .split(separator: "\n", omittingEmptySubsequences: false) {
+                let columns = MetricsFormatter.columns(of: line)
+                #expect(
+                    columns.left.count <= 5,
+                    "速度列出现了超过五个字符的形态：\(columns.left)"
+                )
+                #expect(
+                    columns.right.count <= 4,
+                    "CPU 列出现了超过四个字符的形态：\(columns.right)"
+                )
+            }
         }
     }
 
