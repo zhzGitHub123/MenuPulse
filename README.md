@@ -1,99 +1,113 @@
+**English** | [简体中文](README.zh-CN.md)
+
 # MenuPulse
 
-一个极简的 macOS 菜单栏监控工具，在状态栏实时显示**网络上下行速度**和 **CPU 占用率**。
+A minimal macOS menu bar monitor that shows **network throughput** and **CPU usage** in real time, right in your status bar.
 
 ```
 ↑1.2M  CPU
 ↓15.3M  23%
 ```
 
-两行等宽字体紧凑排布，只占一小块菜单栏空间。没有主窗口，没有 Dock 图标，装上就忘掉它的存在。
+Two lines of monospaced text in a compact block. No main window, no Dock icon — install it and forget it's there.
 
-## 特性
+## Features
 
-- **双指标一屏** — 上传/下载速度与 CPU 占用同时显示，无需点开任何面板
-- **自动省电** — 屏幕休眠、用户会话切换、系统睡眠时自动暂停采样，唤醒后恢复
-- **自适应外观** — 状态栏图标以 template image 渲染，自动跟随深色/浅色菜单栏
-- **宽度自适应** — 数值变长变短时状态栏宽度平滑调整，不会来回抖动
-- **无障碍支持** — 为 VoiceOver 提供完整的朗读标签
-- **零依赖** — 纯 AppKit 实现，不引入任何第三方库
-- **沙盒运行** — 开启 App Sandbox，只申请必要权限
+- **Both metrics at a glance** — upload/download speed and CPU usage side by side, no panel to open
+- **Power aware** — sampling pauses on screen sleep, session switch, and system sleep, and resumes on wake
+- **Idle throttling** — when the network is quiet and the CPU is idle, the sampling interval stretches out to cut wakeups
+- **Adaptive appearance** — the status item renders as a template image and follows the light/dark menu bar automatically
+- **Stable width** — the status bar width adjusts smoothly as values grow and shrink, without jitter
+- **Accessible** — full VoiceOver labels
+- **Zero dependencies** — pure AppKit, no third-party libraries
+- **Sandboxed** — App Sandbox enabled, requests only what it needs
 
-## 系统要求
+## Requirements
 
-- macOS 15.1 或更高版本
-- 构建需要 Xcode 16 或更高版本
+- macOS 15.1 or later
+- Xcode 16 or later to build from source
 
-## 安装
+## Install
 
-目前没有提供预编译版本，需要自行构建。
+### Download a prebuilt binary
 
-### 用 Xcode 构建
+Grab `MenuPulse.zip` from the [latest release](https://github.com/zhzGitHub123/MenuPulse/releases/latest), unzip it, and move `MenuPulse.app` into your Applications folder.
 
+The app is **not notarized by Apple**, so macOS will refuse to open it the first time — usually with "cannot be opened because the developer cannot be verified" or "is damaged". Nothing is actually damaged; the app simply isn't enrolled in the Apple Developer Program. Clear the quarantine attribute once and it runs normally:
+
+```bash
+xattr -cr /Applications/MenuPulse.app
 ```
+
+If you'd rather not run an unsigned binary, build it yourself — the source is right here.
+
+### Build with Xcode
+
+```bash
 open MenuPulse.xcodeproj
 ```
 
-选择 `MenuPulse` scheme，按 ⌘R 运行。
+Select the `MenuPulse` scheme and press ⌘R.
 
-### 用命令行构建
+### Build from the command line
 
-```
+```bash
 xcodebuild -project MenuPulse.xcodeproj -scheme MenuPulse -configuration Release -derivedDataPath DerivedData build
 ```
 
-产物位于 `DerivedData/Build/Products/Release/MenuPulse.app`，拖进「应用程序」文件夹即可。
+The product lands in `DerivedData/Build/Products/Release/MenuPulse.app`. Drag it into your Applications folder.
 
-## 使用
+## Usage
 
-启动后应用直接常驻菜单栏，**不会出现在 Dock 或 ⌘Tab 切换器中**（使用 `.accessory` 激活策略）。
+The app lives entirely in the menu bar and **never appears in the Dock or the ⌘Tab switcher** (it uses the `.accessory` activation policy).
 
-点击状态栏项目弹出菜单，目前只有一项：
+Click the status item to open its menu, which currently holds a single entry:
 
-| 菜单项 | 快捷键 |
+| Menu item | Shortcut |
 | --- | --- |
-| 退出 | ⌘Q |
+| Quit | ⌘Q |
 
-## 实现说明
+## How it works
 
-### 数据采集
+### Data collection
 
-| 指标 | 来源 |
+| Metric | Source |
 | --- | --- |
-| 网络速度 | `sysctl` 读取网络接口字节计数器，对相邻两次采样求差分 |
-| CPU 占用 | `host_statistics(HOST_CPU_LOAD_INFO)` 读取 tick 计数，按 user/system/nice/idle 增量计算 |
+| Network speed | Interface byte counters read via `sysctl`, differenced between consecutive samples |
+| CPU usage | Tick counts from `host_statistics(HOST_CPU_LOAD_INFO)`, computed from user/system/nice/idle deltas |
 
-两者都是**增量计算**而非瞬时值，因此首次采样不产生输出，从第二次开始才有数据。
+Both are **deltas rather than instantaneous readings**, so the first sample produces no output — data starts flowing from the second one.
 
-时间差用 `ProcessInfo.systemUptime` 计算，而非墙上时钟，因此用户调整系统时间或时区不会导致速度值异常。
+Elapsed time comes from `ProcessInfo.systemUptime` rather than the wall clock, so changing the system time or time zone won't produce bogus speed values.
 
-计数器回绕的处理方式两者不同：
+Counter wraparound is handled differently for each metric:
 
-- **CPU** —— tick 类型是 32 位的 `natural_t`，回绕后按 `UInt32.max` 补正差值，结果依然可用
-- **网络** —— 检测到计数器回退即判定该次采样不可信，**直接丢弃**，等下一个周期重新计算
+- **CPU** — tick values are 32-bit `natural_t`; after a wrap the delta is corrected against `UInt32.max` and remains usable
+- **Network** — a counter that moves backwards marks the sample as untrustworthy, and it is **discarded** so the next cycle starts fresh
 
-### 采样策略
+### Sampling strategy
 
-- 采样周期 **2 秒**，允许 **400ms** 的 leeway 让系统合并唤醒，降低功耗
-- 采样在独立的 `utility` QoS 队列上执行，不阻塞主线程
-- 仅在标题实际变化时才重绘状态栏，避免无谓的 UI 刷新
+- Base interval is **2 seconds**, with **400 ms** of leeway so the system can coalesce wakeups
+- When both directions stay under **1 KB/s** and CPU stays under **10%** for **5 consecutive samples**, the app switches to a longer idle cadence with more leeway. Any activity resets the streak immediately, so the next sample is back at full rate
+- Sampling runs on a dedicated `utility` QoS queue and never blocks the main thread
+- The status bar is redrawn only when the title actually changes
 
-### 暂停条件
+### Pause conditions
 
-监控状态由两个因素共同决定：状态栏项目是否可见，以及是否存在任一暂停原因。暂停原因以 `OptionSet` 表示，可以叠加：
+Monitoring depends on two things: whether the status item is visible, and whether any pause reason is active. Pause reasons are represented as an `OptionSet` and can stack:
 
-| 原因 | 触发通知 |
+| Reason | Triggering notification |
 | --- | --- |
-| 屏幕休眠 | `screensDidSleepNotification` |
-| 会话失活 | `sessionDidResignActiveNotification` |
-| 系统睡眠 | `willSleepNotification` |
+| Screens asleep | `screensDidSleepNotification` |
+| Session inactive | `sessionDidResignActiveNotification` |
+| System sleeping | `willSleepNotification` |
 
-三者全部解除且状态栏可见时才恢复采样。重启采样时会递增 generation 计数，丢弃上一轮遗留的回调结果，避免竞态导致的过期数据上屏。
+Sampling resumes only when all three are cleared and the status item is visible. Each restart bumps a generation counter so stale callbacks from the previous round are dropped, preventing a race from putting outdated data on screen.
 
-## 工具脚本
+## Tooling
 
-`Tools/GenerateAppIcon.swift` 用于生成全尺寸 App 图标资源。
+`Tools/GenerateAppIcon.swift` generates the full set of app icon assets.
 
-## 许可证
+## License
 
 [MIT](LICENSE) © 2026 zhzGitHub123
