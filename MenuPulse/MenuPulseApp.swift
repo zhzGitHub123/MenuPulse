@@ -7,9 +7,9 @@ import AppKit
 import Foundation
 
 private enum AppConfiguration {
-    /// 状态项的宽度下限。仅用于兜底，正常读数下实际宽度都由内容决定，
-    /// 定得过大会在短读数时把状态项撑出空白。
+    /// 状态项按最宽内容一次性定宽，避免读数变化触发菜单栏重排和 XPC 尺寸同步。
     static let minimumStatusItemWidth: CGFloat = 38
+    static let widestStatusTitle = "1023G\tCPU\n1023G\t100%"
     static let statusImageHeight: CGFloat = 20
     static let imageHorizontalPadding: CGFloat = 4
     /// 速度列与 CPU 列之间的间距。等宽字体下一个空格约 5pt，这里按点数给，
@@ -23,6 +23,21 @@ private enum AppConfiguration {
     /// 闲置时的采样节奏：更长的间隔配更大的余量，便于系统合并唤醒。
     static let idleSamplingInterval: DispatchTimeInterval = .seconds(8)
     static let idleSamplingLeeway: DispatchTimeInterval = .seconds(2)
+}
+
+/// 按钮内的纯绘制层：不接管点击，也不周期修改 `NSStatusBarButton` 的内容属性。
+private final class StatusMetricsView: NSView {
+    var drawingHandler: (() -> Void)?
+
+    override var isFlipped: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        drawingHandler?()
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
 }
 
 struct MonitoringSuspensionReasons: OptionSet, Sendable {
@@ -46,7 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let sampler = SystemSampler()
     private let statusTextAttributes: [NSAttributedString.Key: Any] = [
         .font: NSFont.monospacedSystemFont(ofSize: 8.5, weight: .regular),
-        .foregroundColor: NSColor.black
+        .foregroundColor: NSColor.labelColor
     ]
     private let samplingQueue = DispatchQueue(
         label: "io.github.zhzgithub123.MenuPulse.metrics",
@@ -54,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         autoreleaseFrequency: .workItem
     )
 
+    private var statusImageTitle = ""
     private var statusItem: NSStatusItem?
     private var samplingTimer: DispatchSourceTimer?
     private var workspaceObservers: [NSObjectProtocol] = []
@@ -66,6 +82,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 当前显示在菜单栏上的那次采样，作为判断后续变化是否值得刷新的基准。
     private var displayedMetrics: SystemMetrics?
     private var suppressedUpdates = 0
+
+    /// 两列与状态项只测量一次。周期刷新不再修改 `NSStatusItem.length`。
+    private lazy var fixedColumnLayout: (
+        leftWidth: CGFloat,
+        rightWidth: CGFloat,
+        imageSize: NSSize,
+        itemWidth: CGFloat
+    ) = {
+        let attributes = statusTextAttributes
+        var leftWidth: CGFloat = 0
+        var rightWidth: CGFloat = 0
+
+        for line in AppConfiguration.widestStatusTitle.split(
+            separator: "\n",
+            omittingEmptySubsequences: false
+        ) {
+            let columns = MetricsFormatter.columns(of: line)
+            leftWidth = max(
+                leftWidth,
+                (columns.left as NSString).size(withAttributes: attributes).width
+            )
+            rightWidth = max(
+                rightWidth,
+                (columns.right as NSString).size(withAttributes: attributes).width
+            )
+        }
+
+        leftWidth = ceil(leftWidth)
+        rightWidth = ceil(rightWidth)
+        let imageSize = NSSize(
+            width: leftWidth + AppConfiguration.columnSpacing + rightWidth
+                + AppConfiguration.imageHorizontalPadding,
+            height: AppConfiguration.statusImageHeight
+        )
+        return (
+            leftWidth,
+            rightWidth,
+            imageSize,
+            max(
+                AppConfiguration.minimumStatusItemWidth,
+                imageSize.width + AppConfiguration.buttonHorizontalPadding
+            )
+        )
+    }()
+
+    /// 只加入按钮一次。后续更新仅重绘这个子视图，完全避开 NSImage 路径。
+    private lazy var statusView: StatusMetricsView = {
+        let view = StatusMetricsView(
+            frame: NSRect(origin: .zero, size: fixedColumnLayout.imageSize)
+        )
+        view.drawingHandler = { [weak self] in
+            self?.drawCurrentStatusContent()
+        }
+        return view
+    }()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
@@ -89,7 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(
-            withLength: AppConfiguration.minimumStatusItemWidth
+            withLength: fixedColumnLayout.itemWidth
         )
         guard let button = item.button else { return }
 
@@ -99,10 +170,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             cpuUsage: 0
         )
         button.alignment = .center
-        button.imagePosition = .imageOnly
-        button.imageScaling = .scaleNone
+        button.title = ""
         let title = MetricsFormatter.statusTitle(initialMetrics)
-        setStatusTitle(title, metrics: initialMetrics, on: item)
+        updateStatusImageTitle(title)
+        statusView.frame.origin = NSPoint(
+            x: floor((button.bounds.width - statusView.frame.width) / 2),
+            y: floor((button.bounds.height - statusView.frame.height) / 2)
+        )
+        statusView.autoresizingMask = [
+            .minXMargin,
+            .maxXMargin,
+            .minYMargin,
+            .maxYMargin
+        ]
+        button.addSubview(statusView)
+        button.setAccessibilityLabel(MetricsFormatter.accessibilityLabel(initialMetrics))
         button.toolTip = "实时网络速度与 CPU 占用（上行在上，下行在下）"
 
         item.menu = makeMenu()
@@ -118,22 +200,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ) {
         guard let button = item.button else { return }
 
-        let rendered = makeStatusImage(title)
-        button.title = ""
-        button.image = rendered.image
-        button.setAccessibilityLabel(MetricsFormatter.accessibilityLabel(metrics))
-        if abs(item.length - rendered.itemWidth) >= 0.5 {
-            item.length = rendered.itemWidth
+        updateStatusImageTitle(title)
+        statusView.needsDisplay = true
+        if NSWorkspace.shared.isVoiceOverEnabled {
+            button.setAccessibilityLabel(MetricsFormatter.accessibilityLabel(metrics))
         }
     }
 
-    /// 按当前读数实际占的宽度排版，不做任何预留。
-    ///
-    /// 曾经改成按最宽内容（`1023G`）固定预留，好处是 `NSStatusItem.length` 恒定、
-    /// 菜单栏不再重排，实测省下约 10% 的常驻 CPU；代价是短读数左边永远空着两格，
-    /// 状态项明显变胖。省下的那点开销买不回这份紧凑，所以退回自适应。
-    private func makeStatusImage(_ title: String) -> (image: NSImage, itemWidth: CGFloat) {
+    private func updateStatusImageTitle(_ title: String) {
+        statusImageTitle = title
+    }
+
+    private func drawCurrentStatusContent() {
+        let title = statusImageTitle
+
         let attributes = statusTextAttributes
+        let layout = fixedColumnLayout
         let measured = title
             .split(separator: "\n", omittingEmptySubsequences: false)
             .prefix(2)
@@ -149,25 +231,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 )
             }
 
-        let leftColumn = ceil(measured.map(\.leftSize.width).max() ?? 0)
-        let rightColumn = ceil(measured.map(\.rightSize.width).max() ?? 0)
-        let imageSize = NSSize(
-            width: leftColumn + AppConfiguration.columnSpacing + rightColumn
-                + AppConfiguration.imageHorizontalPadding,
-            height: AppConfiguration.statusImageHeight
-        )
         let contentOrigin = AppConfiguration.imageHorizontalPadding / 2
-        let leftColumnEdge = contentOrigin + leftColumn
-        let rightColumnEdge = leftColumnEdge + AppConfiguration.columnSpacing + rightColumn
-
-        // 立即光栅化，而不是交给 NSImage 的 drawingHandler。
-        //
-        // drawingHandler 产生的是惰性的 NSCustomImageRep：AppKit 每次显示状态项都要回调
-        // 重新绘制，并额外走一遍挑选最佳表示的通用路径。这里一次性画进位图，
-        // 之后菜单栏拿到的就是现成的像素。
-        let image = NSImage(size: imageSize)
-        image.lockFocusFlipped(true)
-        let lineHeight = imageSize.height / CGFloat(max(measured.count, 1))
+        let leftColumnEdge = contentOrigin + layout.leftWidth
+        let rightColumnEdge = leftColumnEdge
+            + AppConfiguration.columnSpacing
+            + layout.rightWidth
+        let lineHeight = layout.imageSize.height / CGFloat(max(measured.count, 1))
         for (index, line) in measured.enumerated() {
             let lineTop = CGFloat(index) * lineHeight
             draw(
@@ -187,16 +256,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 attributes: attributes
             )
         }
-        image.unlockFocus()
-
-        image.isTemplate = true
-        return (
-            image,
-            max(
-                AppConfiguration.minimumStatusItemWidth,
-                imageSize.width + AppConfiguration.buttonHorizontalPadding
-            )
-        )
     }
 
     /// 两列都靠各自的右边缘对齐：速度的个位、CPU 的百分号因此停在同一条竖线上，

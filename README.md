@@ -6,15 +6,15 @@ A minimal macOS menu bar monitor that shows **network throughput** and **CPU usa
 
 ![MenuPulse sitting in the macOS menu bar](docs/screenshot.png)
 
-Two lines of monospaced text in a compact block. No main window, no Dock icon — install it and forget it's there. It holds **14 MB** of memory, ships as a **233 KB** binary, and keeps CPU under **1% of a single core** while sampling.
+Two lines of monospaced text in a compact block. No main window, no Dock icon — install it and forget it's there. It holds **13 MB** of memory, ships as a **343 KB** binary, and keeps CPU under **1% of a single core** while sampling.
 
 ## Features
 
-- **Featherweight** — 14 MB resident, zero third-party dependencies, no SwiftUI runtime, no render loop
+- **Featherweight** — 13 MB resident, zero third-party dependencies, no SwiftUI runtime, no render loop
 - **Both metrics at a glance** — upload/download speed and CPU usage side by side, no panel to open
 - **Power aware** — sampling pauses on screen sleep, session switch, and system sleep, and resumes on wake
 - **Idle throttling** — when the network is quiet and the CPU is idle, the sampling interval stretches out to cut wakeups
-- **Adaptive appearance** — the status item renders as a template image and follows the light/dark menu bar automatically
+- **Adaptive appearance** — text is drawn in `labelColor`, so it tracks the light/dark menu bar automatically
 - **Rock-steady width** — the two columns are measured once and never resize, so the status item keeps a constant width and never nudges the icons next to it
 - **Accessible** — full VoiceOver labels
 - **Zero dependencies** — pure AppKit, no third-party libraries
@@ -26,22 +26,33 @@ A menu bar monitor that costs you measurable battery life defeats its own purpos
 
 | | Measured |
 | --- | --- |
-| Memory footprint | **14 MB** (`phys_footprint`, peak equals steady state) |
-| CPU, busy machine | **~0.47%** of one core over a 300 s window, with live network traffic |
+| Memory footprint | **13 MB** (`phys_footprint`, peak equals steady state) |
+| CPU, busy machine | **~0.31%** of one core over a 300 s window, with live network traffic |
 | — app's own sampling | **0.033%** — reading the counters costs 0.7 ms per sample |
-| — menu bar refresh | the rest, a fixed **~10 ms per refresh** that AppKit charges to hand a new image to the menu bar |
-| Executable size | **233 KB** |
+| — menu bar refresh | the rest, roughly **8 ms per refresh** that macOS charges to put anything new in the menu bar |
+| Executable size | **343 KB** |
 | Third-party dependencies | **0** |
 
-That second breakdown is the honest part of this table. **94% of the cost is not our code** — it's the price macOS charges for putting anything new in the menu bar (rasterization, a Core Animation commit, and an XPC round trip to ControlCenter). Verify it yourself: `sample MenuPulse 60` and look at where the main thread's non-idle frames land.
+That second breakdown is the honest part of this table. **~90% of the cost is not our code** — it's the price macOS charges for a Core Animation commit and an XPC round trip to ControlCenter every time the menu bar changes. Verify it yourself: `sample MenuPulse 60` and look at where the main thread's non-idle frames land.
 
-That number also sets the strategy. Micro-optimizing the sampling path is pointless when it is already 6% of the total; the only lever that moves the needle is **refreshing less often**, which is what the significance threshold and idle throttling below are for. On an idle machine, where the threshold suppresses most updates and the interval stretches to 8 seconds, the figure drops well below the number above.
+That number also sets the strategy. Micro-optimizing the sampling path is pointless when it is already a tenth of the total; the two levers that actually move the needle are **making each refresh cheaper** and **refreshing less often**. Both were measured, not guessed — the figure started at 0.633% and came down in stages:
+
+| Change | Measured |
+| --- | --- |
+| Baseline | 0.633% |
+| Fixed-width status item (no menu bar re-layout) | 0.567% |
+| Significance threshold + 3 s interval | 0.470% |
+| Custom `NSView` redraw instead of rebuilding an `NSImage` | **0.313%** |
+| *(reference)* sampling with the UI update disabled | *0.033%* |
+
+That last row is the floor: anything drawn in the menu bar has to go through a layer commit. On an idle machine, where the threshold suppresses most updates and the interval stretches to 8 seconds, the figure drops well below the number quoted above.
 
 Where that comes from:
 
 - **No SwiftUI runtime.** A SwiftUI `MenuBarExtra` keeps a rendering pipeline resident for the lifetime of the app. MenuPulse is plain AppKit with a single `NSStatusItem` — there is no view hierarchy to diff and no render loop to run.
-- **Nothing heavy on the main thread.** Sampling happens on a dedicated `utility` QoS queue. The main thread only ever assigns a string to the status item's title.
-- **Coalesced wakeups.** The timer carries 400 ms of leeway, which lets the kernel batch this app's wakeup with work it was already going to do. Timer coalescing is where most of the energy savings in a periodic app actually come from — a rigid timer forces a dedicated wakeup every cycle.
+- **No `NSImage` in the refresh path.** The status item hosts a plain `NSView` that draws the two columns itself, so a refresh is one `needsDisplay = true` rather than a freshly built image handed to `NSStatusBarButton`. Skipping `NSImage` also skips its representation-selection machinery and the template re-tinting AppKit otherwise performs on every draw. This single change accounted for a third of the total CPU.
+- **Nothing heavy on the main thread.** Sampling happens on a dedicated `utility` QoS queue. The main thread only stores the new string and flags the view for redraw.
+- **Coalesced wakeups.** The timer carries 600 ms of leeway, which lets the kernel batch this app's wakeup with work it was already going to do. Timer coalescing is where most of the energy savings in a periodic app actually come from — a rigid timer forces a dedicated wakeup every cycle.
 - **Idle throttling.** Once both directions stay under 1 KB/s and CPU under 10% for five consecutive samples, the interval stretches and the leeway widens. Any real activity resets the streak instantly, so responsiveness is not traded away.
 - **No redundant redraws.** The status bar is repainted only when the rendered title actually differs from what's already on screen. A steady 0 B/s costs zero drawing.
 - **A full stop, not a slowdown.** On screen sleep, session switch, or system sleep, the timer is torn down entirely — not merely slowed. Nothing samples, nothing draws, nothing wakes the CPU until the state clears.
